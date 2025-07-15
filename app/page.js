@@ -1,103 +1,262 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import GroceryList from './components/GroceryList';
+import AddGroceryForm from './components/AddGroceryForm';
+import BatchAddGroceryForm from './components/BatchAddGroceryForm';
+import ReceiptUpload from './components/ReceiptUpload';
+import GroceryItemPopup from './components/GroceryItemPopup';
+import DocumentAnalysisPopup from './components/DocumentAnalysisPopup';
+import BatchGroceryPopup from './components/BatchGroceryPopup';
+import { storage } from '../lib/storage';
+import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceriesByExpiry } from '../lib/utils';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [groceries, setGroceries] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showBatchForm, setShowBatchForm] = useState(false);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [showGroceryPopup, setShowGroceryPopup] = useState(false);
+  const [showBatchPopup, setShowBatchPopup] = useState(false);
+  const [showDocumentPopup, setShowDocumentPopup] = useState(false);
+  const [pendingGroceryItem, setPendingGroceryItem] = useState(null);
+  const [batchShelfLifeResult, setBatchShelfLifeResult] = useState(null);
+  const [documentAnalysisResult, setDocumentAnalysisResult] = useState(null);
+  const [isLoadingShelfLife, setIsLoadingShelfLife] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    const loadGroceries = () => {
+      const stored = storage.getGroceries();
+      const updated = stored.map(grocery => ({
+        ...grocery,
+        daysUntilExpiry: calculateDaysUntilExpiry(grocery.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(grocery.expiryDate))
+      }));
+      setGroceries(sortGroceriesByExpiry(updated));
+    };
+
+    loadGroceries();
+    const interval = setInterval(loadGroceries, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAddGrocery = (newGrocery) => {
+    const grocery = storage.addGrocery({
+      ...newGrocery,
+      daysUntilExpiry: calculateDaysUntilExpiry(newGrocery.expiryDate),
+      status: getExpiryStatus(calculateDaysUntilExpiry(newGrocery.expiryDate))
+    });
+    setGroceries(prev => sortGroceriesByExpiry([...prev, grocery]));
+    setShowAddForm(false);
+  };
+
+  const handleDeleteGrocery = (id) => {
+    storage.deleteGrocery(id);
+    setGroceries(prev => prev.filter(g => g.id !== id));
+  };
+
+  const handleAddGroceryWithAI = async (itemName) => {
+    if (!itemName.trim()) return;
+    
+    setIsLoadingShelfLife(true);
+    try {
+      const response = await fetch('/api/get-shelf-life', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName: itemName.trim() })
+      });
+
+      if (!response.ok) throw new Error('Failed to get shelf life');
+      
+      const shelfLifeData = await response.json();
+      setPendingGroceryItem(shelfLifeData);
+      setShowGroceryPopup(true);
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error getting shelf life:', error);
+      alert('Could not get shelf life information. Please try again.');
+    } finally {
+      setIsLoadingShelfLife(false);
+    }
+  };
+
+  const handleConfirmGroceryItem = (groceryData) => {
+    const grocery = storage.addGrocery({
+      ...groceryData,
+      daysUntilExpiry: calculateDaysUntilExpiry(groceryData.expiryDate),
+      status: getExpiryStatus(calculateDaysUntilExpiry(groceryData.expiryDate))
+    });
+    setGroceries(prev => sortGroceriesByExpiry([...prev, grocery]));
+    setShowGroceryPopup(false);
+    setPendingGroceryItem(null);
+  };
+
+  const handleBatchAddGrocery = async (itemNames) => {
+    if (!itemNames || itemNames.length === 0) return;
+    
+    setIsLoadingShelfLife(true);
+    try {
+      const response = await fetch('/api/get-shelf-life', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemNames: itemNames })
+      });
+
+      if (!response.ok) throw new Error('Failed to get shelf life');
+      
+      const batchResult = await response.json();
+      setBatchShelfLifeResult(batchResult);
+      setShowBatchPopup(true);
+      setShowBatchForm(false);
+    } catch (error) {
+      console.error('Error getting batch shelf life:', error);
+      alert('Could not get shelf life information for some items. Please try again.');
+    } finally {
+      setIsLoadingShelfLife(false);
+    }
+  };
+
+  const handleConfirmBatchItems = (itemsToAdd) => {
+    const addedItems = itemsToAdd.map(item => {
+      const grocery = storage.addGrocery({
+        ...item,
+        daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
+      });
+      return grocery;
+    });
+    
+    setGroceries(prev => sortGroceriesByExpiry([...prev, ...addedItems]));
+    setShowBatchPopup(false);
+    setBatchShelfLifeResult(null);
+  };
+
+  const handleReceiptAnalyzed = (analysisResult) => {
+    setDocumentAnalysisResult(analysisResult);
+    setShowDocumentPopup(true);
+    setShowDocumentUpload(false);
+  };
+
+  const handleConfirmDocumentItems = (itemsToAdd) => {
+    const addedItems = itemsToAdd.map(item => {
+      const grocery = storage.addGrocery({
+        ...item,
+        daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
+      });
+      return grocery;
+    });
+    
+    setGroceries(prev => sortGroceriesByExpiry([...prev, ...addedItems]));
+    setShowDocumentPopup(false);
+    setDocumentAnalysisResult(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <header className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Expiry Tracker</h1>
+          <p className="text-gray-600">Keep track of your groceries and their expiration dates</p>
+        </header>
+
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Add Single Item
+          </button>
+          <button
+            onClick={() => setShowBatchForm(true)}
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
           >
-            Read our docs
-          </a>
+            Batch Add Items
+          </button>
+          <button
+            onClick={() => setShowDocumentUpload(true)}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+          >
+            Upload Receipt
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-semibold mb-4">Add New Grocery</h2>
+              <AddGroceryForm 
+                onSubmit={handleAddGrocery}
+                onSubmitWithAI={handleAddGroceryWithAI}
+                onCancel={() => setShowAddForm(false)}
+                isLoadingShelfLife={isLoadingShelfLife}
+              />
+            </div>
+          </div>
+        )}
+
+        {showBatchForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+              <BatchAddGroceryForm 
+                onBatchSubmit={handleBatchAddGrocery}
+                onCancel={() => setShowBatchForm(false)}
+                isLoadingShelfLife={isLoadingShelfLife}
+              />
+            </div>
+          </div>
+        )}
+
+        {showDocumentUpload && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+              <h2 className="text-xl font-semibold mb-4">Upload Receipt</h2>
+              <ReceiptUpload 
+                onReceiptAnalyzed={handleReceiptAnalyzed}
+                onClose={() => setShowDocumentUpload(false)}
+              />
+            </div>
+          </div>
+        )}
+
+        {showGroceryPopup && pendingGroceryItem && (
+          <GroceryItemPopup
+            item={pendingGroceryItem}
+            onConfirm={handleConfirmGroceryItem}
+            onCancel={() => {
+              setShowGroceryPopup(false);
+              setPendingGroceryItem(null);
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        )}
+
+        {showBatchPopup && batchShelfLifeResult && (
+          <BatchGroceryPopup
+            batchResult={batchShelfLifeResult}
+            onConfirm={handleConfirmBatchItems}
+            onCancel={() => {
+              setShowBatchPopup(false);
+              setBatchShelfLifeResult(null);
+            }}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+        )}
+
+        {showDocumentPopup && documentAnalysisResult && (
+          <DocumentAnalysisPopup
+            analysisResult={documentAnalysisResult}
+            onConfirm={handleConfirmDocumentItems}
+            onCancel={() => {
+              setShowDocumentPopup(false);
+              setDocumentAnalysisResult(null);
+            }}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        )}
+
+        <GroceryList 
+          groceries={groceries}
+          onDelete={handleDeleteGrocery}
+        />
+      </div>
     </div>
   );
 }
