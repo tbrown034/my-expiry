@@ -153,38 +153,41 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Expiry Tracker</h1>
-          <p className="text-gray-600">Keep track of your groceries and their expiration dates</p>
-        </header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Expiry Tracker</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">Keep track of your groceries and their expiration dates with smart AI-powered shelf life detection</p>
+        </div>
 
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex flex-wrap justify-center gap-6 mb-12">
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="flex items-center space-x-3 bg-white text-gray-800 px-8 py-4 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-200 font-medium"
           >
-            Add Single Item
+            <span className="text-2xl">➕</span>
+            <span>Add Single Item</span>
           </button>
           <button
             onClick={() => setShowBatchForm(true)}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            className="flex items-center space-x-3 bg-white text-gray-800 px-8 py-4 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-200 font-medium"
           >
-            Batch Add Items
+            <span className="text-2xl">📝</span>
+            <span>Batch Add Items</span>
           </button>
           <button
             onClick={() => setShowDocumentUpload(true)}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+            className="flex items-center space-x-3 bg-white text-gray-800 px-8 py-4 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-200 font-medium"
           >
-            Upload Receipt
+            <span className="text-2xl">📄</span>
+            <span>Upload Receipt</span>
           </button>
         </div>
 
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-semibold mb-4">Add New Grocery</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+              <h2 className="text-2xl font-bold mb-6 text-gray-900">Add New Grocery</h2>
               <AddGroceryForm 
                 onSubmit={handleAddGrocery}
                 onSubmitWithAI={handleAddGroceryWithAI}
@@ -196,8 +199,8 @@ export default function Home() {
         )}
 
         {showBatchForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
               <BatchAddGroceryForm 
                 onBatchSubmit={handleBatchAddGrocery}
                 onCancel={() => setShowBatchForm(false)}
@@ -208,9 +211,9 @@ export default function Home() {
         )}
 
         {showDocumentUpload && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
-              <h2 className="text-xl font-semibold mb-4">Upload Receipt</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
+              <h2 className="text-2xl font-bold mb-6 text-gray-900">Upload Receipt</h2>
               <ReceiptUpload 
                 onReceiptAnalyzed={handleReceiptAnalyzed}
                 onClose={() => setShowDocumentUpload(false)}
