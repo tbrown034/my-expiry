@@ -8,6 +8,10 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("ANTHROPIC_API_KEY environment variable is not set");
+}
+
 function getExpiryStatus(expiryDate) {
   const today = new Date();
   const expiry = new Date(expiryDate);
@@ -25,6 +29,14 @@ function getExpiryStatus(expiryDate) {
 export async function POST(request) {
   try {
     console.log("Starting receipt analysis...");
+    
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is missing in production");
+      return NextResponse.json(
+        { error: "API configuration error" },
+        { status: 500 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get("file");
