@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { ExpiryStatus } from "../../../lib/types";
-import { calculateExpiryDate } from "../../../lib/utils";
+// Dynamic import to avoid build issues
+let pdf;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -41,16 +42,95 @@ export async function POST(request) {
     let content;
     try {
       if (file.type === "application/pdf") {
-        console.log(
-          "PDF files not currently supported - please convert to image first"
-        );
-        return NextResponse.json(
-          {
-            error:
-              "PDF files not currently supported. Please convert to image (JPG, PNG) or text first.",
-          },
-          { status: 400 }
-        );
+        // For PDF files - extract text and analyze
+        console.log("Processing PDF file...");
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        try {
+          if (!pdf) {
+            try {
+              const pdfParseModule = await import('pdf-parse');
+              pdf = pdfParseModule.default || pdfParseModule;
+            } catch (importError) {
+              console.error("Failed to import pdf-parse:", importError);
+              throw new Error("PDF processing library unavailable. Please try uploading as an image instead.");
+            }
+          }
+          const pdfData = await pdf(buffer);
+          const pdfText = pdfData.text;
+          
+          if (!pdfText.trim()) {
+            console.error("PDF appears to contain no readable text");
+            return NextResponse.json(
+              {
+                error: "PDF appears to contain no readable text. Please ensure it's a text-based PDF.",
+              },
+              { status: 400 }
+            );
+          }
+
+          console.log(`Extracted ${pdfText.length} characters from PDF`);
+          console.log("🤖 AI TRIP: Starting PDF analysis with Claude API");
+
+          const message = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 4000,
+            messages: [
+              {
+                role: "user",
+                content: `Extract ALL grocery/food items from this Kroger receipt PDF text. Convert product names to simple, common food names and provide realistic home shelf life information.
+
+Categories: dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, other
+Ignore: non-food items (personal care, household, bags, tax, fees, store info, payment info)
+
+Important: 
+- Convert brand names to generic food names (e.g., "Cheez-It Crackers" → "crackers")
+- Focus only on food and beverages
+- Use simple, common names people would search for
+- Be thorough - this receipt has many items
+- Provide realistic "days from purchase until food goes bad" for typical home storage
+- This is what consumers need: how many days from when they bought it until they should use it
+
+Examples of realistic shelf life:
+- Fresh milk: 5-7 days from purchase
+- Bananas: 4-5 days from purchase
+- Ground beef: 1-2 days from purchase
+- Bread: 3-5 days from purchase
+
+Return JSON:
+{
+  "groceryItems": [
+    {
+      "name": "simple food name", 
+      "category": "category",
+      "shelfLifeDays": number,
+      "storageRecommendations": "brief home storage tips"
+    }
+  ],
+  "receiptDate": "YYYY-MM-DD or null",
+  "summary": "Found X grocery items from receipt"
+}
+
+PDF Receipt text:
+${pdfText}`,
+              },
+            ],
+          });
+
+          console.log("✅ AI TRIP: Completed PDF analysis with Claude API");
+          console.log(`📊 AI RESPONSE: Received ${message.content[0].text.length} characters`);
+          content = message.content[0].text;
+        } catch (pdfError) {
+          console.error("Error processing PDF:", pdfError);
+          return NextResponse.json(
+            {
+              error: "Failed to extract text from PDF. Please ensure it's a valid PDF file.",
+              details: pdfError.message,
+            },
+            { status: 400 }
+          );
+        }
       } else if (file.type.startsWith("image/")) {
         // For image files (JPEG, PNG, WebP, etc.)
         const arrayBuffer = await file.arrayBuffer();
@@ -69,15 +149,26 @@ export async function POST(request) {
               content: [
                 {
                   type: "text",
-                  text: `Extract ALL grocery items from this receipt image. Convert to simple names.
+                  text: `Extract ALL grocery items from this receipt image. Convert to simple names and provide realistic home shelf life information.
 
 Categories: dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, other
 Ignore: bags, tax, fees, non-food
 
+Important:
+- Provide realistic "days from purchase until food goes bad" for typical home storage
+- This is what consumers need: how many days from when they bought it until they should use it
+
+Examples: milk 5-7 days, bananas 4-5 days, ground beef 1-2 days, bread 3-5 days
+
 Return JSON:
 {
   "groceryItems": [
-    {"name": "Item name", "category": "category"}
+    {
+      "name": "Item name", 
+      "category": "category",
+      "shelfLifeDays": number,
+      "storageRecommendations": "brief home storage tips"
+    }
   ],
   "receiptDate": "YYYY-MM-DD or null",
   "summary": "Found X items"
@@ -112,15 +203,26 @@ Return JSON:
           messages: [
             {
               role: "user",
-              content: `Extract grocery items from this CSV. Convert to simple names.
+              content: `Extract grocery items from this CSV. Convert to simple names and provide realistic home shelf life information.
 
 Categories: dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, other
 Ignore: non-food items
 
+Important:
+- Provide realistic "days from purchase until food goes bad" for typical home storage
+- This is what consumers need: how many days from when they bought it until they should use it
+
+Examples: milk 5-7 days, bananas 4-5 days, ground beef 1-2 days, bread 3-5 days
+
 Return JSON:
 {
   "groceryItems": [
-    {"name": "Item name", "category": "category"}
+    {
+      "name": "Item name", 
+      "category": "category",
+      "shelfLifeDays": number,
+      "storageRecommendations": "brief home storage tips"
+    }
   ],
   "receiptDate": null,
   "summary": "Found X items"
@@ -160,15 +262,26 @@ ${csvText}`,
           messages: [
             {
               role: "user",
-              content: `Extract ALL grocery items from this receipt text. Convert to simple names.
+              content: `Extract ALL grocery items from this receipt text. Convert to simple names and provide realistic home shelf life information.
 
 Categories: dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, other
 Ignore: bags, tax, fees, non-food
 
+Important:
+- Provide realistic "days from purchase until food goes bad" for typical home storage
+- This is what consumers need: how many days from when they bought it until they should use it
+
+Examples: milk 5-7 days, bananas 4-5 days, ground beef 1-2 days, bread 3-5 days
+
 Return JSON:
 {
   "groceryItems": [
-    {"name": "Item name", "category": "category"}
+    {
+      "name": "Item name", 
+      "category": "category",
+      "shelfLifeDays": number,
+      "storageRecommendations": "brief home storage tips"
+    }
   ],
   "receiptDate": "YYYY-MM-DD or null",
   "summary": "Found X items"
@@ -256,24 +369,27 @@ ${content}`,
           continue;
         }
 
-        const purchaseDate = new Date().toISOString().split("T")[0];
-        const expiryDate = calculateExpiryDate(
-          purchaseDate,
-          item.name,
-          item.category
-        );
+        const purchaseDate = analysisResult.receiptDate || new Date().toISOString().split("T")[0];
+        
+        // Calculate expiry date from shelf life
+        const expiryDate = new Date(purchaseDate);
+        expiryDate.setDate(expiryDate.getDate() + (item.shelfLifeDays || 7)); // default 7 days if no shelf life
+        const expiryDateString = expiryDate.toISOString().split("T")[0];
+        
         const daysUntilExpiry = Math.ceil(
-          (new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+          (new Date(expiryDateString) - new Date()) / (1000 * 60 * 60 * 24)
         );
 
         const groceryItem = {
           name: item.name,
           category: item.category,
           purchaseDate,
-          expiryDate,
+          expiryDate: expiryDateString,
+          shelfLifeDays: item.shelfLifeDays || 7,
           daysUntilExpiry,
           addedManually: false,
-          status: getExpiryStatus(daysUntilExpiry),
+          status: getExpiryStatus(expiryDateString),
+          storageRecommendations: item.storageRecommendations || null,
         };
 
         processedItems.push(groceryItem);
