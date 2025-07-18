@@ -35,8 +35,10 @@ Purchase date: ${purchaseDate}
 
 IMPORTANT: Provide realistic "days from purchase until food goes bad" for typical home storage. This is what consumers need to know - how many days they have from when they bought it until they should use it or throw it away.
 
+SPECIAL ATTENTION TO LEFTOVERS: When items are identified as leftovers (leftover pizza, leftover beef stew, leftover turkey dinner, etc.), provide shorter shelf life appropriate for cooked food storage. Leftovers should typically last 3-4 days in the refrigerator.
+
 For each item, provide:
-1. Category (dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, other)
+1. Category (dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, leftovers, other)
 2. Realistic shelf life in DAYS FROM PURCHASE until it goes bad (assume typical home refrigerator/pantry storage)
 3. Expiry date calculated from purchase date
 4. Brief storage tips for home use
@@ -47,6 +49,9 @@ Examples of what we want:
 - Ground beef: 1-2 days from purchase
 - Bread: 3-5 days from purchase
 - Canned goods: 365+ days from purchase
+- Leftover pizza: 3-4 days from purchase
+- Leftover beef stew: 3-4 days from purchase
+- Leftover turkey dinner: 3-4 days from purchase
 
 Return JSON:
 {

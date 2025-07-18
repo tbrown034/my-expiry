@@ -9,6 +9,8 @@ import GroceryItemPopup from './components/GroceryItemPopup';
 import DocumentAnalysisPopup from './components/DocumentAnalysisPopup';
 import BatchGroceryPopup from './components/BatchGroceryPopup';
 import GroceryAnalysisPopup from './components/GroceryAnalysisPopup';
+import EditGroceryModal from './components/EditGroceryModal';
+import GroceryDetailModal from './components/GroceryDetailModal';
 import Toast from './components/Toast';
 import { storage } from '../lib/storage';
 import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
@@ -29,6 +31,10 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [showAnalysisPopup, setShowAnalysisPopup] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingGrocery, setEditingGrocery] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailGrocery, setDetailGrocery] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'info', isVisible: false });
 
   const showToast = useCallback((message, type = 'info') => {
@@ -230,9 +236,56 @@ export default function Home() {
   };
 
   const handleEditGrocery = useCallback((id) => {
-    console.log('clicked edit button for item:', id);
-    showToast('Edit functionality coming soon!', 'info');
-  }, [showToast]);
+    const grocery = groceries.find(g => g.id === id);
+    if (grocery) {
+      setEditingGrocery(grocery);
+      setShowEditModal(true);
+    }
+  }, [groceries]);
+
+  const handleSaveEditedGrocery = (updatedData) => {
+    try {
+      const updatedGrocery = {
+        ...updatedData,
+        daysUntilExpiry: calculateDaysUntilExpiry(updatedData.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(updatedData.expiryDate))
+      };
+      
+      const saved = storage.updateGrocery(editingGrocery.id, updatedGrocery);
+      if (saved) {
+        setGroceries(prev => 
+          sortGroceries(
+            prev.map(g => g.id === editingGrocery.id ? saved : g), 
+            sortBy
+          )
+        );
+        setShowEditModal(false);
+        setEditingGrocery(null);
+        showToast('Grocery item updated successfully!', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating grocery:', error);
+      showToast('Failed to update grocery item. Please try again.', 'error');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setEditingGrocery(null);
+  };
+
+  const handleShowDetail = useCallback((id) => {
+    const grocery = groceries.find(g => g.id === id);
+    if (grocery) {
+      setDetailGrocery(grocery);
+      setShowDetailModal(true);
+    }
+  }, [groceries]);
+
+  const handleCloseDetail = () => {
+    setShowDetailModal(false);
+    setDetailGrocery(null);
+  };
 
   return (
     <div className="min-h-screen bg-white relative">
@@ -388,6 +441,23 @@ export default function Home() {
           />
         )}
 
+        {showEditModal && editingGrocery && (
+          <EditGroceryModal
+            grocery={editingGrocery}
+            onSave={handleSaveEditedGrocery}
+            onCancel={handleCancelEdit}
+          />
+        )}
+
+        {showDetailModal && detailGrocery && (
+          <GroceryDetailModal
+            grocery={detailGrocery}
+            onEdit={handleEditGrocery}
+            onDelete={handleDeleteGrocery}
+            onClose={handleCloseDetail}
+          />
+        )}
+
         {groceries.length > 0 && (
           <div className="border-4 border-gray-400 rounded-lg p-3 mb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
@@ -450,6 +520,10 @@ export default function Home() {
                 <span>Beverages</span>
               </div>
               <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-yellow-500 rounded-sm"></div>
+                <span>Leftovers</span>
+              </div>
+              <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-gray-500 rounded-sm"></div>
                 <span>Other</span>
               </div>
@@ -461,6 +535,7 @@ export default function Home() {
           groceries={groceries}
           onDelete={handleDeleteGrocery}
           onEdit={handleEditGrocery}
+          onShowDetail={handleShowDetail}
         />
 
         <Toast

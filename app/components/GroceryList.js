@@ -1,7 +1,7 @@
-import { formatExpiryText, getStatusColor, getCategoryColorClass } from '../../lib/utils';
+import { formatExpiryText, getStatusColor, getCategoryColorClass, formatGroceryName, formatCategoryName } from '../../lib/utils';
 import CountdownTimer from './CountdownTimer';
 
-export default function GroceryList({ groceries, onDelete, onEdit }) {
+export default function GroceryList({ groceries, onDelete, onEdit, onShowDetail }) {
   if (groceries.length === 0) {
     return (
       <div className="border-4 border-gray-400 rounded-lg">
@@ -33,13 +33,16 @@ export default function GroceryList({ groceries, onDelete, onEdit }) {
               <div className="flex items-center flex-shrink-0">
                 <div className={`w-3 h-3 rounded-sm ${getCategoryColorClass(grocery.category)}`}></div>
               </div>
-              <div className="flex-1 min-w-0">
+              <div 
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={() => onShowDetail(grocery.id)}
+              >
                 <h3 id={`grocery-${grocery.id}-title`} className="font-medium text-gray-900 text-base truncate mb-1">
-                  {grocery.name}
+                  {formatGroceryName(grocery.name)}
                 </h3>
                 <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded capitalize">
-                    {grocery.category}
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
+                    {formatCategoryName(grocery.category)}
                   </span>
                   {grocery.addedManually && (
                     <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -91,13 +94,16 @@ export default function GroceryList({ groceries, onDelete, onEdit }) {
                 <div className="flex items-center flex-shrink-0">
                   <div className={`w-3 h-3 rounded-sm ${getCategoryColorClass(grocery.category)}`}></div>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => onShowDetail(grocery.id)}
+                >
                   <h3 id={`grocery-${grocery.id}-title`} className="font-medium text-gray-900 text-base truncate mb-1">
-                    {grocery.name}
+                    {formatGroceryName(grocery.name)}
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded capitalize">
-                      {grocery.category}
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
+                      {formatCategoryName(grocery.category)}
                     </span>
                     {grocery.addedManually && (
                       <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
