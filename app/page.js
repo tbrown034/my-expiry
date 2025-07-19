@@ -11,7 +11,9 @@ import BatchGroceryPopup from './components/BatchGroceryPopup';
 import GroceryAnalysisPopup from './components/GroceryAnalysisPopup';
 import EditGroceryModal from './components/EditGroceryModal';
 import GroceryDetailModal from './components/GroceryDetailModal';
+import LandingPage from './components/LandingPage';
 import Toast from './components/Toast';
+import { ButtonSpinner } from './components/LoadingSpinner';
 import { storage } from '../lib/storage';
 import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
 
@@ -35,6 +37,7 @@ export default function Home() {
   const [editingGrocery, setEditingGrocery] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailGrocery, setDetailGrocery] = useState(null);
+  const [showLanding, setShowLanding] = useState(true);
   const [toast, setToast] = useState({ message: '', type: 'info', isVisible: false });
 
   const showToast = useCallback((message, type = 'info') => {
@@ -287,8 +290,64 @@ export default function Home() {
     setDetailGrocery(null);
   };
 
+  const handleStartTracking = (quickAnswerItem = null) => {
+    if (quickAnswerItem) {
+      try {
+        const grocery = storage.addGrocery({
+          ...quickAnswerItem,
+          daysUntilExpiry: calculateDaysUntilExpiry(quickAnswerItem.expiryDate),
+          status: getExpiryStatus(calculateDaysUntilExpiry(quickAnswerItem.expiryDate))
+        });
+        setGroceries(prev => sortGroceries([...prev, grocery], sortBy));
+        showToast('Item added from quick check!', 'success');
+      } catch (error) {
+        console.error('Error adding quick item:', error);
+        showToast('Failed to add item. Please try again.', 'error');
+      }
+    }
+    setShowLanding(false);
+  };
+
+  const handleSignIn = () => {
+    showToast('Sign in functionality coming soon!', 'info');
+  };
+
+  const handleSignUp = () => {
+    showToast('Sign up functionality coming soon!', 'info');
+  };
+
+  if (showLanding) {
+    return (
+      <>
+        <LandingPage 
+          onStartTracking={handleStartTracking}
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+        />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={hideToast}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white relative">
+      {/* Back to Landing Button */}
+      <div className="absolute top-4 left-4 z-20">
+        <button
+          onClick={() => setShowLanding(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Home
+        </button>
+      </div>
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header Section */}
@@ -478,8 +537,9 @@ export default function Home() {
                 <button
                   onClick={handleGetFreshnessInfo}
                   disabled={isAnalyzing}
-                  className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-xs sm:text-sm w-full sm:w-auto"
+                  className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-xs sm:text-sm w-full sm:w-auto flex items-center justify-center gap-2"
                 >
+                  {isAnalyzing && <ButtonSpinner color="white" size="xs" />}
                   {isAnalyzing ? 'Getting info...' : 'Get Freshness Info'}
                 </button>
 
