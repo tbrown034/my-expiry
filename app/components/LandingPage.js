@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ButtonSpinner } from './LoadingSpinner';
+import AuthButton from './AuthButton';
 
 export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
   const [quickItem, setQuickItem] = useState('');
@@ -40,7 +41,7 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleQuickCheck();
     }
@@ -58,20 +59,7 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
             My Expiry
           </h1>
           
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onSignIn}
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={onSignUp}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-lg"
-            >
-              Sign Up
-            </button>
-          </div>
+          <AuthButton />
         </div>
       </header>
 
@@ -85,10 +73,10 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
           <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-emerald-200 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s'}}></div>
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-20">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-16">
           <div className="text-center mb-16">
             {/* Main Headline */}
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
               Keep Your Food
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
                 Fresh & Safe
@@ -96,57 +84,63 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
             </h1>
             
             {/* Subheadline */}
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Track{' '}
-              <span className="relative inline-block">
-                <span className="relative z-10 font-semibold text-green-800">groceries</span>
-                <span className="absolute bottom-1 left-0 w-full h-3 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full opacity-70 animate-pulse"></span>
-              </span>
-              {' '}and{' '}
-              <span className="relative inline-block">
-                <span className="relative z-10 font-semibold text-orange-800">leftovers</span>
-                <span className="absolute bottom-1 left-0 w-full h-3 bg-gradient-to-r from-orange-200 to-yellow-200 rounded-full opacity-70 animate-pulse" style={{animationDelay: '0.5s'}}></span>
-              </span>
-              {' '}with AI-powered freshness insights.
-              <span className="block mt-2 font-medium text-green-700">
-                Eliminate waste • Stay healthy • Save money • Feel empowered
-              </span>
-            </p>
+            <div className="mb-8 max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                <span className="relative inline-block">
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">Track groceries</span>
+                  <span className="absolute bottom-2 left-0 w-full h-4 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full opacity-50 animate-pulse"></span>
+                </span>
+                {' '}and{' '}
+                <span className="relative inline-block">
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">leftovers</span>
+                  <span className="absolute bottom-2 left-0 w-full h-4 bg-gradient-to-r from-orange-200 to-red-200 rounded-full opacity-50 animate-pulse" style={{animationDelay: '0.5s'}}></span>
+                </span>
+              </h2>
+              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
+                AI-powered freshness insights to keep your food safe and fresh.
+                <span className="block mt-3 font-semibold text-lg md:text-xl text-green-700">
+                  ✨ Eliminate waste • Stay healthy • Save money • Feel empowered
+                </span>
+              </p>
+            </div>
 
             {/* CTA Button */}
-            <button
-              onClick={() => onStartTracking()}
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-lg font-semibold rounded-2xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
-            >
-              <span>Start Tracking Now</span>
-              <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => onStartTracking()}
+                className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xl font-bold rounded-2xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+              >
+                <span>Start Tracking Now</span>
+                <svg className="ml-3 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+              <p className="text-sm text-gray-500 font-medium">No signup required • Free forever</p>
+            </div>
           </div>
 
           {/* Quick Check Section */}
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-green-100">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Quick Freshness Check</h3>
-                <p className="text-gray-600">Get instant shelf life information for any item</p>
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-green-100 hover:shadow-3xl transition-all duration-300">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-bold text-gray-900 mb-3">Quick Freshness Check</h3>
+                <p className="text-lg text-gray-600">Get instant shelf life information for any item</p>
               </div>
 
-              <div className="flex gap-3 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <input
                   type="text"
                   value={quickItem}
                   onChange={(e) => setQuickItem(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   placeholder="e.g., leftover beef stew, bananas, milk..."
-                  className="flex-1 px-6 py-4 rounded-2xl border-2 border-green-200 focus:border-green-500 focus:outline-none text-lg placeholder-gray-400"
+                  className="flex-1 px-6 py-4 rounded-2xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 text-lg placeholder-gray-400 transition-all duration-200"
                   disabled={isLoading}
                 />
                 <button
                   onClick={handleQuickCheck}
                   disabled={isLoading || !quickItem.trim()}
-                  className="px-8 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-semibold transition-colors flex items-center justify-center min-w-[100px]"
+                  className="px-8 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-semibold transition-all duration-200 flex items-center justify-center min-w-[120px] shadow-lg hover:shadow-xl"
                 >
                   {isLoading ? (
                     <ButtonSpinner color="white" />
@@ -158,7 +152,7 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
 
               {/* Quick Answer Display */}
               {quickAnswer && (
-                <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200 shadow-lg">
                   {quickAnswer.error ? (
                     <p className="text-red-600 text-center">{quickAnswer.message}</p>
                   ) : (
