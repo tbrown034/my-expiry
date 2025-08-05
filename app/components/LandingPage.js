@@ -52,12 +52,46 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
       {/* Header */}
       <header className="relative z-10 px-4 py-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 
-            className="text-2xl font-bold text-gray-900 cursor-pointer hover:text-green-600 transition-colors"
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => window.location.href = '/'}
           >
-            My Expiry
-          </h1>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="flex-shrink-0">
+              <defs>
+                <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor:'#10b981', stopOpacity:1}} />
+                  <stop offset="100%" style={{stopColor:'#059669', stopOpacity:1}} />
+                </linearGradient>
+              </defs>
+              <path d="M16 2 C24 2, 30 8, 30 16 C30 20, 28 24, 24 26 C20 28, 16 28, 16 28 C16 28, 12 28, 8 26 C4 24, 2 20, 2 16 C2 8, 8 2, 16 2 Z" 
+                    fill="url(#leafGradient)" 
+                    stroke="#047857" 
+                    strokeWidth="1"/>
+              <path d="M16 4 L16 26" 
+                    stroke="#047857" 
+                    strokeWidth="1.5" 
+                    strokeLinecap="round"/>
+              <path d="M16 8 L12 12" 
+                    stroke="#047857" 
+                    strokeWidth="1" 
+                    strokeLinecap="round"/>
+              <path d="M16 8 L20 12" 
+                    stroke="#047857" 
+                    strokeWidth="1" 
+                    strokeLinecap="round"/>
+              <path d="M16 14 L11 18" 
+                    stroke="#047857" 
+                    strokeWidth="1" 
+                    strokeLinecap="round"/>
+              <path d="M16 14 L21 18" 
+                    stroke="#047857" 
+                    strokeWidth="1" 
+                    strokeLinecap="round"/>
+            </svg>
+            <h1 className="text-2xl font-bold text-gray-900 hover:text-green-600 transition-colors">
+              My Expiry
+            </h1>
+          </div>
           
           <AuthButton />
         </div>
