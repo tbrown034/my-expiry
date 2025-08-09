@@ -13,6 +13,7 @@ import EditGroceryModal from './components/EditGroceryModal';
 import GroceryDetailModal from './components/GroceryDetailModal';
 import LandingPage from './components/LandingPage';
 import Toast from './components/Toast';
+import FunAlert from './components/FunAlert';
 import { ButtonSpinner } from './components/LoadingSpinner';
 import { storage } from '../lib/storage';
 import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
@@ -39,6 +40,9 @@ export default function Home() {
   const [detailGrocery, setDetailGrocery] = useState(null);
   const [showLanding, setShowLanding] = useState(true);
   const [toast, setToast] = useState({ message: '', type: 'info', isVisible: false });
+  const [funAlert, setFunAlert] = useState({ isOpen: false, type: 'construction' });
+  const [easterEggClicks, setEasterEggClicks] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
 
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type, isVisible: true });
@@ -316,6 +320,27 @@ export default function Home() {
     showToast('Sign up functionality coming soon!', 'info');
   };
 
+  const showFunAlert = (type = 'construction') => {
+    setFunAlert({ isOpen: true, type });
+  };
+
+  const closeFunAlert = () => {
+    setFunAlert({ isOpen: false, type: 'construction' });
+  };
+
+  const handleLogoClick = () => {
+    setEasterEggClicks(prev => {
+      const newCount = prev + 1;
+      if (newCount === 5) {
+        setShowEasterEgg(true);
+        showToast('🎉 You found the secret! Enjoy the rainbow mode! 🌈', 'success');
+        setTimeout(() => setShowEasterEgg(false), 10000); // Hide after 10 seconds
+        return 0; // Reset counter
+      }
+      return newCount;
+    });
+  };
+
   if (showLanding) {
     return (
       <>
@@ -338,29 +363,34 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50/30 relative">
       {/* Back to Landing Button - Integrated into header */}
       
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in-up">
-          <div className="p-6">
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up hover-lift">
+          <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-sm">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div 
+                  onClick={handleLogoClick}
+                  className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer hover-lift hover-glow transition-all duration-300 ${
+                    showEasterEgg ? 'hover-rainbow animate-heartbeat' : ''
+                  }`}
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 hover:text-emerald-600 transition-colors duration-300">
                     My Expiry
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600 opacity-80">
                     Smart food waste prevention
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowLanding(true)}
-                className="border border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2"
+                className="border-2 border-gray-300 hover:border-emerald-400 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover-lift"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -373,91 +403,94 @@ export default function Home() {
 
         {/* Quick Stats */}
         {Array.isArray(groceries) && groceries.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
-            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl font-bold text-gray-900 mb-1">{groceries.length || 0}</div>
-              <div className="text-sm font-medium text-gray-600">Total Items</div>
-              <div className="w-full h-1 bg-gray-200 rounded-full mt-3">
-                <div className="h-1 bg-gray-400 rounded-full" style={{width: '100%'}}></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift hover-glow group">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 group-hover:animate-bounce-gentle">{groceries.length || 0}</div>
+              <div className="text-xs sm:text-sm font-medium text-gray-600">Total Items</div>
+              <div className="w-full h-1.5 bg-gray-200 rounded-full mt-3 overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full transition-all duration-700" style={{width: '100%'}}></div>
               </div>
             </div>
-            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl font-bold text-red-600 mb-1">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
-              <div className="text-sm font-medium text-gray-600">Expired</div>
-              <div className="w-full h-1 bg-red-100 rounded-full mt-3">
-                <div className="h-1 bg-red-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expired').length / groceries.length) * 100 : 0}%`}}></div>
+            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift group">
+              <div className="text-xl sm:text-2xl font-bold text-red-600 mb-1 group-hover:animate-shake">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
+              <div className="text-xs sm:text-sm font-medium text-gray-600">Expired</div>
+              <div className="w-full h-1.5 bg-red-100 rounded-full mt-3 overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expired').length / groceries.length) * 100 : 0}%`}}></div>
               </div>
             </div>
-            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl font-bold text-amber-600 mb-1">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
-              <div className="text-sm font-medium text-gray-600">Expiring Soon</div>
-              <div className="w-full h-1 bg-amber-100 rounded-full mt-3">
-                <div className="h-1 bg-amber-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expiring_soon').length / groceries.length) * 100 : 0}%`}}></div>
+            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift group">
+              <div className="text-xl sm:text-2xl font-bold text-amber-600 mb-1 group-hover:animate-wiggle">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
+              <div className="text-xs sm:text-sm font-medium text-gray-600">Expiring Soon</div>
+              <div className="w-full h-1.5 bg-amber-100 rounded-full mt-3 overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expiring_soon').length / groceries.length) * 100 : 0}%`}}></div>
               </div>
             </div>
-            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
-              <div className="text-2xl font-bold text-green-600 mb-1">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
-              <div className="text-sm font-medium text-gray-600">Fresh</div>
-              <div className="w-full h-1 bg-green-100 rounded-full mt-3">
-                <div className="h-1 bg-green-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'fresh').length / groceries.length) * 100 : 0}%`}}></div>
+            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift hover-glow group">
+              <div className="text-xl sm:text-2xl font-bold text-green-600 mb-1 group-hover:animate-heartbeat">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
+              <div className="text-xs sm:text-sm font-medium text-gray-600">Fresh</div>
+              <div className="w-full h-1.5 bg-green-100 rounded-full mt-3 overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'fresh').length / groceries.length) * 100 : 0}%`}}></div>
               </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1"
+            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow"
           >
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300 group-hover:animate-bounce-gentle">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 group-hover:text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-gray-900 mb-2">Add Single Item</div>
-                <div className="text-sm text-gray-600">AI-powered shelf life detection</div>
+                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-emerald-700 transition-colors">Add Single Item</div>
+                <div className="text-xs sm:text-sm text-gray-600">AI-powered shelf life detection</div>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowBatchForm(true)}
-            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1"
+            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow"
           >
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 group-hover:animate-wiggle">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 group-hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-gray-900 mb-2">Batch Add Items</div>
-                <div className="text-sm text-gray-600">Add multiple items at once</div>
+                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-blue-700 transition-colors">Batch Add Items</div>
+                <div className="text-xs sm:text-sm text-gray-600">Add multiple items at once</div>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowDocumentUpload(true)}
-            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1 relative"
+            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow relative overflow-hidden"
           >
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            <div className="flex items-start gap-3 sm:gap-4 relative z-10">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 group-hover:animate-float">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 group-hover:text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-gray-900 mb-2">Upload Receipt</div>
-                <div className="text-sm text-gray-600">Scan receipts and photos</div>
+                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-purple-700 transition-colors">Upload Receipt</div>
+                <div className="text-xs sm:text-sm text-gray-600">Scan receipts and photos</div>
               </div>
             </div>
-            <div className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-400 text-white shadow-md border border-white/20 animate-pulse">
               PDF
+            </div>
+            <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity">
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl animate-spin-slow">📷</div>
             </div>
           </button>
         </div>
@@ -589,8 +622,15 @@ export default function Home() {
                   </button>
 
                   <button
+                    onClick={() => showFunAlert('construction')}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all text-xs sm:text-sm hover-lift shadow-lg hover:shadow-xl"
+                  >
+                    🎨 Style Mode
+                  </button>
+                  
+                  <button
                     onClick={handleClearAll}
-                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all text-xs sm:text-sm hover-lift shadow-lg hover:shadow-xl"
                   >
                     Clear All
                   </button>
@@ -649,6 +689,12 @@ export default function Home() {
           type={toast.type}
           isVisible={toast.isVisible}
           onClose={hideToast}
+        />
+        
+        <FunAlert 
+          isOpen={funAlert.isOpen} 
+          onClose={closeFunAlert} 
+          type={funAlert.type} 
         />
       </div>
     </div>

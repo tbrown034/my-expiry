@@ -7,17 +7,7 @@ import AuthButton from "./AuthButton"
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
-
-  // Handle scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -47,11 +37,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200/50' 
-          : 'bg-gradient-to-r from-green-50/90 to-emerald-50/90 backdrop-blur-sm border-b border-green-100/50'
-      }`}>
+      <header className="sticky top-0 z-50 transition-all duration-300 bg-white/95 backdrop-blur-md shadow-md border-b border-emerald-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
@@ -78,7 +64,7 @@ export default function Header() {
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900 hover:text-green-600 transition-colors leading-tight">
                   My Expiry
                 </h1>
-                <span className="text-xs text-gray-500 -mt-1 hidden sm:block lg:text-sm">Smart Food Tracking</span>
+                <span className="text-xs text-gray-500 mt-0.5 hidden sm:block lg:text-sm">Smart Food Tracking</span>
               </div>
             </Link>
             
@@ -89,9 +75,9 @@ export default function Header() {
                   <Link 
                     key={link.href}
                     href={link.href} 
-                    className={`relative px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-white/50 ${
+                    className={`relative px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg ${
                       isActive(link.href)
-                        ? 'text-emerald-600 bg-white/60 shadow-sm'
+                        ? 'text-emerald-600'
                         : 'text-gray-600 hover:text-emerald-600'
                     }`}
                   >
@@ -119,7 +105,7 @@ export default function Header() {
                 className={`relative p-2 rounded-lg transition-all duration-300 ${
                   isMobileMenuOpen 
                     ? 'bg-emerald-100 text-emerald-600' 
-                    : 'bg-white/60 text-gray-600 hover:bg-white/80 hover:text-emerald-600'
+                    : 'text-gray-600 hover:text-emerald-600'
                 }`}
                 aria-label="Toggle mobile menu"
                 aria-expanded={isMobileMenuOpen}
@@ -143,14 +129,16 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
           ></div>
           
           {/* Mobile Menu Panel */}
-          <div className="absolute top-16 right-0 left-0 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-lg animate-slide-in-right">
+          <div 
+            className="absolute top-16 right-0 left-0 bg-gradient-to-b from-green-50/95 to-emerald-50/95 backdrop-blur-md border-b border-emerald-200/50 shadow-lg animate-slide-in-right"
+            onClick={(e) => e.stopPropagation()}
+          >
             <nav className="px-4 py-6 space-y-1 max-w-md mx-auto">
               {navLinks.map((link, index) => (
                 <Link 
