@@ -365,37 +365,38 @@ export default function Home() {
       
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up hover-lift">
+        <div className="bg-white/95 backdrop-blur-sm border border-emerald-100 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up">
           <div className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div 
                   onClick={handleLogoClick}
-                  className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer hover-lift hover-glow transition-all duration-300 ${
-                    showEasterEgg ? 'hover-rainbow animate-heartbeat' : ''
+                  className={`relative w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-400 via-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-110 hover:rotate-3 ${
+                    showEasterEgg ? 'animate-bounce' : ''
                   }`}
                 >
-                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-green-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-opacity"></div>
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 hover:text-emerald-600 transition-colors duration-300">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
                     My Expiry
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-600 opacity-80">
-                    Smart food waste prevention
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium">
+                    Track • Save • Thrive
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowLanding(true)}
-                className="border-2 border-gray-300 hover:border-emerald-400 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover-lift"
+                className="group flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border border-emerald-200 rounded-xl font-semibold text-emerald-700 transition-all duration-300 shadow-sm hover:shadow-md"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                <span className="hidden sm:inline">Home</span>
+                <span className="hidden sm:inline">Back to Home</span>
               </button>
             </div>
           </div>
@@ -403,94 +404,142 @@ export default function Home() {
 
         {/* Quick Stats */}
         {Array.isArray(groceries) && groceries.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift hover-glow group">
-              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 group-hover:animate-bounce-gentle">{groceries.length || 0}</div>
-              <div className="text-xs sm:text-sm font-medium text-gray-600">Total Items</div>
-              <div className="w-full h-1.5 bg-gray-200 rounded-full mt-3 overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full transition-all duration-700" style={{width: '100%'}}></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+            <div className="relative bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-5 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full -mr-10 -mt-10 opacity-50"></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    <span className="text-lg">📦</span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-800">{groceries.length || 0}</div>
+                </div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Total Items</div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-gray-400 to-gray-500 rounded-full transition-all duration-1000 ease-out" style={{width: '100%'}}></div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift group">
-              <div className="text-xl sm:text-2xl font-bold text-red-600 mb-1 group-hover:animate-shake">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
-              <div className="text-xs sm:text-sm font-medium text-gray-600">Expired</div>
-              <div className="w-full h-1.5 bg-red-100 rounded-full mt-3 overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expired').length / groceries.length) * 100 : 0}%`}}></div>
+            
+            <div className="relative bg-white/95 backdrop-blur-sm border border-red-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-5 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full -mr-10 -mt-10 opacity-50"></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center">
+                    <span className="text-lg">⚠️</span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-red-600">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
+                </div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Expired</div>
+                <div className="w-full h-2 bg-red-50 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-full transition-all duration-1000 ease-out" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expired').length / groceries.length) * 100 : 0}%`}}></div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift group">
-              <div className="text-xl sm:text-2xl font-bold text-amber-600 mb-1 group-hover:animate-wiggle">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
-              <div className="text-xs sm:text-sm font-medium text-gray-600">Expiring Soon</div>
-              <div className="w-full h-1.5 bg-amber-100 rounded-full mt-3 overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expiring_soon').length / groceries.length) * 100 : 0}%`}}></div>
+            
+            <div className="relative bg-white/95 backdrop-blur-sm border border-amber-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-5 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full -mr-10 -mt-10 opacity-50"></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center">
+                    <span className="text-lg">⏰</span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-amber-600">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
+                </div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Expiring Soon</div>
+                <div className="w-full h-2 bg-amber-50 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-1000 ease-out" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expiring_soon').length / groceries.length) * 100 : 0}%`}}></div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-5 text-center hover-lift hover-glow group">
-              <div className="text-xl sm:text-2xl font-bold text-green-600 mb-1 group-hover:animate-heartbeat">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
-              <div className="text-xs sm:text-sm font-medium text-gray-600">Fresh</div>
-              <div className="w-full h-1.5 bg-green-100 rounded-full mt-3 overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-700" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'fresh').length / groceries.length) * 100 : 0}%`}}></div>
+            
+            <div className="relative bg-white/95 backdrop-blur-sm border border-green-100 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-5 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full -mr-10 -mt-10 opacity-50"></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+                    <span className="text-lg">✨</span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-green-600">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
+                </div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Fresh</div>
+                <div className="w-full h-2 bg-green-50 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full transition-all duration-1000 ease-out" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'fresh').length / groceries.length) * 100 : 0}%`}}></div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow"
+            className="relative bg-white/95 backdrop-blur-sm border border-emerald-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
           >
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300 group-hover:animate-bounce-gentle">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 group-hover:text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div className="flex items-start gap-4">
+              <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-300 to-emerald-400 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
               </div>
               <div className="flex-1">
-                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-emerald-700 transition-colors">Add Single Item</div>
-                <div className="text-xs sm:text-sm text-gray-600">AI-powered shelf life detection</div>
+                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors">Add Single Item</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">AI-powered shelf life detection with smart recommendations</p>
+                <div className="flex items-center gap-2 mt-3 text-xs text-emerald-600 font-medium">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                  Most Popular
+                </div>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowBatchForm(true)}
-            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow"
+            className="relative bg-white/95 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
           >
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 group-hover:animate-wiggle">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 group-hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-sky-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div className="flex items-start gap-4">
+              <div className="relative w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div className="flex-1">
-                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-blue-700 transition-colors">Batch Add Items</div>
-                <div className="text-xs sm:text-sm text-gray-600">Add multiple items at once</div>
+                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">Batch Add Items</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">Add multiple items at once with bulk processing</p>
+                <div className="flex items-center gap-2 mt-3 text-xs text-blue-600 font-medium">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                  Time Saver
+                </div>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowDocumentUpload(true)}
-            className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 sm:p-6 text-left group hover-lift hover-glow relative overflow-hidden"
+            className="relative bg-white/95 backdrop-blur-sm border border-purple-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
           >
-            <div className="flex items-start gap-3 sm:gap-4 relative z-10">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 group-hover:animate-float">
-                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 group-hover:text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div className="flex items-start gap-4">
+              <div className="relative w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               <div className="flex-1">
-                <div className="font-bold text-gray-900 mb-2 text-sm sm:text-base group-hover:text-purple-700 transition-colors">Upload Receipt</div>
-                <div className="text-xs sm:text-sm text-gray-600">Scan receipts and photos</div>
+                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-purple-700 transition-colors">Upload Receipt</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">Scan receipts and photos with AI recognition</p>
+                <div className="flex items-center gap-2 mt-3 text-xs text-purple-600 font-medium">
+                  <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
+                  PDF Support
+                </div>
               </div>
             </div>
-            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-400 to-emerald-400 text-white shadow-md border border-white/20 animate-pulse">
-              PDF
-            </div>
-            <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity">
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl animate-spin-slow">📷</div>
+            <div className="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-emerald-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+              NEW
             </div>
           </button>
         </div>
@@ -595,16 +644,20 @@ export default function Home() {
         )}
 
         {groceries.length > 0 && (
-          <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+          <div className="bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
             <div className="p-6">
+              {/* Header Section */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Your Groceries</h2>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">Your Groceries</h2>
+                  <p className="text-sm text-gray-600">Manage and track your food inventory</p>
+                </div>
                 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 font-medium text-sm px-3 py-2 rounded-lg transition-all duration-200"
+                    className="bg-white border border-gray-200 hover:border-emerald-300 text-gray-700 font-medium text-sm px-4 py-2.5 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-emerald-100 focus:border-emerald-400 shadow-sm"
                   >
                     <option value="expiry">Sort by Expiry</option>
                     <option value="name">Sort by Name</option>
@@ -615,62 +668,69 @@ export default function Home() {
                   <button
                     onClick={handleGetFreshnessInfo}
                     disabled={isAnalyzing}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md text-sm flex items-center gap-2 disabled:opacity-50"
+                    className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm flex items-center gap-2 disabled:opacity-50 transform hover:scale-105"
                   >
                     {isAnalyzing && <ButtonSpinner color="white" size="xs" />}
-                    {isAnalyzing ? 'Analyzing...' : 'Get Freshness Info'}
+                    {isAnalyzing ? 'Analyzing...' : '🔍 Get Freshness Info'}
                   </button>
 
                   <button
                     onClick={() => showFunAlert('construction')}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all text-xs sm:text-sm hover-lift shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm transform hover:scale-105"
                   >
                     🎨 Style Mode
                   </button>
                   
                   <button
                     onClick={handleClearAll}
-                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all text-xs sm:text-sm hover-lift shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-sm transform hover:scale-105"
                   >
-                    Clear All
+                    🗑️ Clear All
                   </button>
                 </div>
               </div>
               
-              {/* Category Legend */}
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 pt-4 border-t border-gray-200">
-                <span className="font-semibold text-gray-700">Categories:</span>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                  <span>Vegetables</span>
+              {/* Enhanced Category Legend */}
+              <div className="bg-gradient-to-r from-gray-50 to-green-50/30 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center">
+                    <span className="text-sm">🏷️</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-800">Category Guide</h3>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full"></div>
-                  <span>Fruits</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                  <span>Meat</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                  <span>Dairy</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-lime-500 rounded-full"></div>
-                  <span>Pantry</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>
-                  <span>Beverages</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
-                  <span>Leftovers</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-gray-500 rounded-full"></div>
-                  <span>Other</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-green-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-green-400 to-green-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Vegetables</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-orange-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Fruits</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-red-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-red-400 to-red-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Meat</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-blue-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Dairy</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-lime-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-lime-400 to-lime-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Pantry</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-purple-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Beverages</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-yellow-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Leftovers</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-100">
+                    <div className="w-3 h-3 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full shadow-sm"></div>
+                    <span className="text-xs font-medium text-gray-700">Other</span>
+                  </div>
                 </div>
               </div>
             </div>
