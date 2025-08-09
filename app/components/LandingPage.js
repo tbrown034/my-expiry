@@ -109,7 +109,7 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
 
           {/* Quick Check Section */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-green-100 hover:shadow-3xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-white/80 to-green-50/80 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-green-200/50 hover:shadow-3xl transition-all duration-300">
               <div className="text-center mb-8">
                 <h3 className="text-3xl font-bold text-gray-900 mb-3">Quick Freshness Check</h3>
                 <p className="text-lg text-gray-600">Get instant shelf life information for any item</p>
@@ -140,22 +140,32 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
 
               {/* Quick Answer Display */}
               {quickAnswer && (
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200 shadow-lg">
+                <div className="bg-gradient-to-br from-white/70 to-green-50/70 backdrop-blur-sm rounded-3xl p-8 border-2 border-green-200/50 shadow-xl">
                   {quickAnswer.error ? (
-                    <p className="text-red-600 text-center">{quickAnswer.message}</p>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">❌</span>
+                      </div>
+                      <p className="text-red-700 font-medium">{quickAnswer.message}</p>
+                    </div>
                   ) : (
                     <>
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <span className="text-2xl">🥗</span>
+                      <div className="flex items-start gap-6 mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-200 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <span className="text-3xl">🥗</span>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-gray-900 text-lg mb-2">{quickAnswer.name}</h4>
-                          <p className="text-gray-700 leading-relaxed">{quickAnswer.answer}</p>
+                          <h4 className="font-bold text-gray-900 text-xl mb-3">{quickAnswer.name}</h4>
+                          <div className="bg-white/60 rounded-xl p-4 mb-4 border border-green-100">
+                            <p className="text-gray-800 leading-relaxed">{quickAnswer.answer}</p>
+                          </div>
                           {quickAnswer.storageRecommendations && (
-                            <p className="text-sm text-green-700 mt-2 italic">
-                              💡 {quickAnswer.storageRecommendations}
-                            </p>
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200/50">
+                              <p className="text-green-800 text-sm font-medium flex items-start gap-2">
+                                <span className="text-lg">💡</span>
+                                <span>{quickAnswer.storageRecommendations}</span>
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -163,9 +173,9 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
                       <div className="flex justify-center">
                         <button
                           onClick={handleAddToList}
-                          className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium transition-colors"
+                          className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl hover:from-green-700 hover:to-emerald-700 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                         >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
                           Add to My List

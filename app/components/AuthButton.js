@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from "next-auth/react"
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react"
 
 export default function AuthButton() {
@@ -19,24 +20,29 @@ export default function AuthButton() {
   if (session) {
     return (
       <div className="relative">
-        <button
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-white/50 transition-all duration-200"
-        >
-          {session.user?.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name || "Profile"}
-              className="w-10 h-10 rounded-full ring-2 ring-green-200 shadow-md"
-              onError={(e) => {
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || session.user?.email || 'User')}&background=10b981&color=fff&size=40`
-              }}
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-green-200 shadow-md">
-              {(session.user?.name?.[0] || session.user?.email?.[0] || 'U').toUpperCase()}
-            </div>
-          )}
+        <div className="flex items-center space-x-3">
+          <Link href="/profile" className="flex-shrink-0">
+            {session.user?.image ? (
+              <Image
+                src={session.user.image}
+                alt={session.user.name || "Profile"}
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer"
+                onError={(e) => {
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || session.user?.email || 'User')}&background=10b981&color=fff&size=40`
+                }}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer">
+                {(session.user?.name?.[0] || session.user?.email?.[0] || 'U').toUpperCase()}
+              </div>
+            )}
+          </Link>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-white/50 transition-all duration-200"
+          >
           <div className="hidden md:block text-left">
             <div className="text-sm font-semibold text-gray-900">
               {session.user?.name || 'User'}
@@ -49,6 +55,7 @@ export default function AuthButton() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
+        </div>
 
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-green-100 py-2 z-50">

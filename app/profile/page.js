@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useState } from "react"
+import Image from "next/image"
 import AuthButton from "../components/AuthButton"
 
 export default function ProfilePage() {
@@ -38,9 +39,11 @@ export default function ProfilePage() {
           <div className="px-6 py-8">
             <div className="flex items-center space-x-6">
               {user?.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt={user.name || "Profile"}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full ring-4 ring-green-200 shadow-lg"
                   onError={(e) => {
                     e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=10b981&color=fff&size=96`
@@ -169,17 +172,17 @@ export default function ProfilePage() {
                     { action: 'Added', item: 'Fresh Spinach', time: '2 days ago', type: 'add' },
                     { action: 'Expired', item: 'Bananas', time: '3 days ago', type: 'expire' }
                   ].map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        activity.type === 'add' ? 'bg-green-400' :
-                        activity.type === 'consume' ? 'bg-blue-400' :
-                        activity.type === 'expire' ? 'bg-red-400' : 'bg-gray-400'
+                    <div key={index} className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-full shadow-sm ${
+                        activity.type === 'add' ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                        activity.type === 'consume' ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                        activity.type === 'expire' ? 'bg-gradient-to-r from-red-400 to-red-500' : 'bg-gradient-to-r from-gray-400 to-gray-500'
                       }`}></div>
-                      <div className="flex-1">
+                      <div className="flex-1 bg-white/50 rounded-xl p-3 border border-green-100/50">
                         <p className="text-sm text-gray-900">
-                          <span className="font-medium">{activity.action}</span> {activity.item}
+                          <span className="font-semibold">{activity.action}</span> {activity.item}
                         </p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
+                        <p className="text-xs text-gray-600 mt-1">{activity.time}</p>
                       </div>
                     </div>
                   ))}

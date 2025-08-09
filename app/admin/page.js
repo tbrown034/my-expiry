@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import AuthButton from "../components/AuthButton"
 
 export default function AdminDashboard() {
@@ -69,7 +70,7 @@ export default function AdminDashboard() {
         <p className="text-lg text-gray-600">Manage users and system settings</p>
       </div>
 
-      <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-green-100">
+      <div className="bg-gradient-to-br from-white/90 to-green-50/90 backdrop-blur-md rounded-3xl shadow-xl border border-green-200/50">
         <div className="px-8 py-6 border-b border-green-100">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">User Management</h2>
           <p className="text-gray-600">View and manage all registered users</p>
@@ -110,9 +111,11 @@ export default function AdminDashboard() {
                     <td className="px-8 py-6 whitespace-nowrap">
                       <div className="flex items-center">
                         {user.image ? (
-                          <img
+                          <Image
                             src={user.image}
                             alt={user.name || "Profile"}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full mr-3"
                             onError={(e) => {
                               e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=10b981&color=fff&size=40`
