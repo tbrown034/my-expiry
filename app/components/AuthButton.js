@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 
-export default function AuthButton() {
+export default function AuthButton({ compact = false }) {
   const { data: session, status } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
 
@@ -26,35 +26,37 @@ export default function AuthButton() {
               <Image
                 src={session.user.image}
                 alt={session.user.name || "Profile"}
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer"
+                width={compact ? 32 : 40}
+                height={compact ? 32 : 40}
+                className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer`}
                 onError={(e) => {
-                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || session.user?.email || 'User')}&background=10b981&color=fff&size=40`
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || session.user?.email || 'User')}&background=10b981&color=fff&size=${compact ? 32 : 40}`
                 }}
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer">
+              <div className={`${compact ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm'} rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold ring-2 ring-green-200 shadow-md hover:ring-green-300 transition-all duration-200 cursor-pointer`}>
                 {(session.user?.name?.[0] || session.user?.email?.[0] || 'U').toUpperCase()}
               </div>
             )}
           </Link>
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-white/50 transition-all duration-200"
-          >
-          <div className="hidden md:block text-left">
-            <div className="text-sm font-semibold text-gray-900">
-              {session.user?.name || 'User'}
-            </div>
-            <div className="text-xs text-gray-600">
-              {session.user?.email}
-            </div>
-          </div>
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+          {!compact && (
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-white/50 transition-all duration-200"
+            >
+              <div className="hidden md:block text-left">
+                <div className="text-sm font-semibold text-gray-900">
+                  {session.user?.name || 'User'}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {session.user?.email}
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {showDropdown && (
@@ -109,18 +111,18 @@ export default function AuthButton() {
   }
 
   return (
-    <div className="flex space-x-3">
+    <div className={`flex ${compact ? 'space-x-1' : 'space-x-3'}`}>
       <button
         onClick={() => signIn()}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-green-200 rounded-xl hover:bg-white hover:border-green-300 transition-all duration-200 shadow-sm"
+        className={`${compact ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm'} font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-green-200 rounded-xl hover:bg-white hover:border-green-300 transition-all duration-200 shadow-sm`}
       >
-        Sign In
+        {compact ? 'In' : 'Sign In'}
       </button>
       <button
         onClick={() => signIn()}
-        className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg"
+        className={`${compact ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm'} font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg`}
       >
-        Sign Up
+        {compact ? 'Up' : 'Sign Up'}
       </button>
     </div>
   )

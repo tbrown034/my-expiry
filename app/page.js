@@ -335,118 +335,128 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white relative">
-      {/* Back to Landing Button */}
-      <div className="absolute top-4 left-4 z-20">
-        <button
-          onClick={() => setShowLanding(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Home
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50/30 relative">
+      {/* Back to Landing Button - Integrated into header */}
       
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Header Section */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" className="flex-shrink-0">
-              <defs>
-                <linearGradient id="leafGradientApp" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor:'#10b981', stopOpacity:1}} />
-                  <stop offset="100%" style={{stopColor:'#059669', stopOpacity:1}} />
-                </linearGradient>
-              </defs>
-              <path d="M16 2 C24 2, 30 8, 30 16 C30 20, 28 24, 24 26 C20 28, 16 28, 16 28 C16 28, 12 28, 8 26 C4 24, 2 20, 2 16 C2 8, 8 2, 16 2 Z" 
-                    fill="url(#leafGradientApp)" 
-                    stroke="#047857" 
-                    strokeWidth="1"/>
-              <path d="M16 4 L16 26" 
-                    stroke="#047857" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round"/>
-              <path d="M16 8 L12 12" 
-                    stroke="#047857" 
-                    strokeWidth="1" 
-                    strokeLinecap="round"/>
-              <path d="M16 8 L20 12" 
-                    stroke="#047857" 
-                    strokeWidth="1" 
-                    strokeLinecap="round"/>
-              <path d="M16 14 L11 18" 
-                    stroke="#047857" 
-                    strokeWidth="1" 
-                    strokeLinecap="round"/>
-              <path d="M16 14 L21 18" 
-                    stroke="#047857" 
-                    strokeWidth="1" 
-                    strokeLinecap="round"/>
-            </svg>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-              My Expiry
-            </h1>
+        <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in-up">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    My Expiry
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Smart food waste prevention
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLanding(true)}
+                className="border border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline">Home</span>
+              </button>
+            </div>
           </div>
-          <p className="text-xs sm:text-sm text-gray-600">
-            Smart food waste prevention with AI-powered expiry tracking
-          </p>
         </div>
 
         {/* Quick Stats */}
         {Array.isArray(groceries) && groceries.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <div className="border-4 border-gray-400 rounded-lg p-3">
-              <div className="text-xl sm:text-2xl font-semibold text-gray-900">{groceries.length || 0}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Total</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
+              <div className="text-2xl font-bold text-gray-900 mb-1">{groceries.length || 0}</div>
+              <div className="text-sm font-medium text-gray-600">Total Items</div>
+              <div className="w-full h-1 bg-gray-200 rounded-full mt-3">
+                <div className="h-1 bg-gray-400 rounded-full" style={{width: '100%'}}></div>
+              </div>
             </div>
-            <div className="border-4 border-red-400 rounded-lg p-3">
-              <div className="text-xl sm:text-2xl font-semibold text-red-600">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Expired</div>
+            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
+              <div className="text-2xl font-bold text-red-600 mb-1">{groceries.filter(g => g?.status === 'expired').length || 0}</div>
+              <div className="text-sm font-medium text-gray-600">Expired</div>
+              <div className="w-full h-1 bg-red-100 rounded-full mt-3">
+                <div className="h-1 bg-red-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expired').length / groceries.length) * 100 : 0}%`}}></div>
+              </div>
             </div>
-            <div className="border-4 border-orange-400 rounded-lg p-3">
-              <div className="text-xl sm:text-2xl font-semibold text-orange-600">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Expiring Soon</div>
+            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
+              <div className="text-2xl font-bold text-amber-600 mb-1">{groceries.filter(g => g?.status === 'expiring_soon').length || 0}</div>
+              <div className="text-sm font-medium text-gray-600">Expiring Soon</div>
+              <div className="w-full h-1 bg-amber-100 rounded-full mt-3">
+                <div className="h-1 bg-amber-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'expiring_soon').length / groceries.length) * 100 : 0}%`}}></div>
+              </div>
             </div>
-            <div className="border-4 border-green-400 rounded-lg p-3">
-              <div className="text-xl sm:text-2xl font-semibold text-green-600">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Fresh</div>
+            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 text-center hover:scale-105 transition-transform duration-200">
+              <div className="text-2xl font-bold text-green-600 mb-1">{groceries.filter(g => g?.status === 'fresh').length || 0}</div>
+              <div className="text-sm font-medium text-gray-600">Fresh</div>
+              <div className="w-full h-1 bg-green-100 rounded-full mt-3">
+                <div className="h-1 bg-green-500 rounded-full" style={{width: `${groceries.length ? (groceries.filter(g => g?.status === 'fresh').length / groceries.length) * 100 : 0}%`}}></div>
+              </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           <button
             onClick={() => setShowAddForm(true)}
-            className="border-4 border-gray-400 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1"
           >
-            <div className="text-left">
-              <div className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Add Single Item</div>
-              <div className="text-xs sm:text-sm text-gray-600">AI-powered shelf life detection</div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 mb-2">Add Single Item</div>
+                <div className="text-sm text-gray-600">AI-powered shelf life detection</div>
+              </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowBatchForm(true)}
-            className="border-4 border-gray-400 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1"
           >
-            <div className="text-left">
-              <div className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Batch Add Items</div>
-              <div className="text-xs sm:text-sm text-gray-600">Add multiple items at once</div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 mb-2">Batch Add Items</div>
+                <div className="text-sm text-gray-600">Add multiple items at once</div>
+              </div>
             </div>
           </button>
 
           <button
             onClick={() => setShowDocumentUpload(true)}
-            className="border-4 border-gray-400 rounded-lg p-4 hover:bg-gray-50 transition-colors relative"
+            className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 text-left hover:shadow-lg group transition-all duration-200 hover:-translate-y-1 relative"
           >
-            <div className="text-left">
-              <div className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Upload Receipt</div>
-              <div className="text-xs sm:text-sm text-gray-600">Scan receipts and photos</div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 mb-2">Upload Receipt</div>
+                <div className="text-sm text-gray-600">Scan receipts and photos</div>
+              </div>
             </div>
-            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded font-medium">
+            <div className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
               PDF
             </div>
           </button>
@@ -552,74 +562,76 @@ export default function Home() {
         )}
 
         {groceries.length > 0 && (
-          <div className="border-4 border-gray-400 rounded-lg p-3 mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Your Groceries</h2>
-              
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="border-4 border-gray-400 rounded-md px-2 py-1 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
-                >
-                  <option value="expiry">Sort by Expiry</option>
-                  <option value="name">Sort by Name</option>
-                  <option value="category">Sort by Category</option>
-                  <option value="purchase-date">Sort by Purchase Date</option>
-                </select>
+          <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Your Groceries</h2>
                 
-                <button
-                  onClick={handleGetFreshnessInfo}
-                  disabled={isAnalyzing}
-                  className="bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-xs sm:text-sm w-full sm:w-auto flex items-center justify-center gap-2"
-                >
-                  {isAnalyzing && <ButtonSpinner color="white" size="xs" />}
-                  {isAnalyzing ? 'Getting info...' : 'Get Freshness Info'}
-                </button>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 font-medium text-sm px-3 py-2 rounded-lg transition-all duration-200"
+                  >
+                    <option value="expiry">Sort by Expiry</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="category">Sort by Category</option>
+                    <option value="purchase-date">Sort by Purchase Date</option>
+                  </select>
+                  
+                  <button
+                    onClick={handleGetFreshnessInfo}
+                    disabled={isAnalyzing}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isAnalyzing && <ButtonSpinner color="white" size="xs" />}
+                    {isAnalyzing ? 'Analyzing...' : 'Get Freshness Info'}
+                  </button>
 
-                <button
-                  onClick={handleClearAll}
-                  className="bg-red-600 text-white px-2 py-1 rounded-md hover:bg-red-700 transition-colors text-xs sm:text-sm w-full sm:w-auto"
-                >
-                  Clear All
-                </button>
+                  <button
+                    onClick={handleClearAll}
+                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    Clear All
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            {/* Category Legend */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-600 pt-3 border-t border-gray-200">
-              <span className="font-medium text-xs">Categories:</span>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-sm"></div>
-                <span>Vegetables</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-orange-500 rounded-sm"></div>
-                <span>Fruits</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-red-500 rounded-sm"></div>
-                <span>Meat</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
-                <span>Dairy</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-lime-500 rounded-sm"></div>
-                <span>Pantry</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-purple-500 rounded-sm"></div>
-                <span>Beverages</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-yellow-500 rounded-sm"></div>
-                <span>Leftovers</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-gray-500 rounded-sm"></div>
-                <span>Other</span>
+              
+              {/* Category Legend */}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 pt-4 border-t border-gray-200">
+                <span className="font-semibold text-gray-700">Categories:</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                  <span>Vegetables</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full"></div>
+                  <span>Fruits</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                  <span>Meat</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                  <span>Dairy</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-lime-500 rounded-full"></div>
+                  <span>Pantry</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>
+                  <span>Beverages</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                  <span>Leftovers</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gray-500 rounded-full"></div>
+                  <span>Other</span>
+                </div>
               </div>
             </div>
           </div>

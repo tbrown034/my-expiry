@@ -48,57 +48,70 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Remove header since it's now in layout */}
 
       {/* Hero Section */}
-      <main className="relative">
+      <main className="relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-green-200 rounded-full opacity-20 animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-emerald-300 rounded-full opacity-30 animate-bounce" style={{animationDelay: '1s'}}></div>
-          <div className="absolute bottom-20 left-1/4 w-20 h-20 bg-green-300 rounded-full opacity-25 animate-pulse" style={{animationDelay: '2s'}}></div>
-          <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-emerald-200 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute top-20 left-10 w-32 h-32 bg-emerald-100 rounded-full opacity-40 animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-emerald-200 rounded-full opacity-30 animate-bounce" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-20 left-1/4 w-20 h-20 bg-emerald-300 rounded-full opacity-25 animate-pulse" style={{animationDelay: '2s'}}></div>
+          <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-emerald-100 rounded-full opacity-30 animate-bounce" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full opacity-20"></div>
+          <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-gradient-to-tr from-green-100 to-emerald-100 rounded-full opacity-15"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center mb-16">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-20">
+          <div className="text-center mb-20 animate-fade-in-up">
             {/* Main Headline */}
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-12 leading-tight">
               Keep Your Food
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-green-600 animate-pulse">
                 Fresh & Safe
               </span>
             </h1>
             
             {/* Subheadline */}
-            <div className="mb-8 max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <div className="mb-12 max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-8 leading-tight">
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">Track groceries</span>
-                  <span className="absolute bottom-2 left-0 w-full h-4 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full opacity-50 animate-pulse"></span>
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-green-600">Track groceries</span>
+                  <span className="absolute bottom-2 left-0 w-full h-3 bg-gradient-to-r from-emerald-200/60 to-green-200/60 rounded-full animate-pulse"></span>
                 </span>
                 {' '}and{' '}
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">leftovers</span>
-                  <span className="absolute bottom-2 left-0 w-full h-4 bg-gradient-to-r from-orange-200 to-red-200 rounded-full opacity-50 animate-pulse" style={{animationDelay: '0.5s'}}></span>
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">leftovers</span>
+                  <span className="absolute bottom-2 left-0 w-full h-3 bg-gradient-to-r from-amber-200/60 to-orange-200/60 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></span>
                 </span>
               </h2>
-              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed mb-8">
                 AI-powered freshness insights to keep your food safe and fresh.
-                <span className="block mt-3 font-semibold text-lg md:text-xl text-green-700">
-                  ✨ Eliminate waste • Stay healthy • Save money • Feel empowered
-                </span>
               </p>
+              <div className="flex flex-wrap justify-center items-center gap-6 text-lg font-medium text-gray-700">
+                <span className="flex items-center gap-2">
+                  <span className="text-emerald-500">✨</span> Eliminate waste
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-blue-500">💚</span> Stay healthy
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-green-500">💰</span> Save money
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-purple-500">⚡</span> Feel empowered
+                </span>
+              </div>
             </div>
 
             {/* CTA Button */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{animationDelay: '0.4s'}}>
               <button
                 onClick={() => onStartTracking()}
-                className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xl font-bold rounded-2xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
+                className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xl font-bold rounded-2xl hover:from-emerald-600 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1"
               >
-                <span>Start Tracking Now</span>
+                <span>Start Tracking</span>
                 <svg className="ml-3 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -107,32 +120,32 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
           </div>
 
           {/* Quick Check Section */}
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-gradient-to-br from-white/80 to-green-50/80 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-green-200/50 hover:shadow-3xl transition-all duration-300">
-              <div className="text-center mb-8">
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">Quick Freshness Check</h3>
-                <p className="text-lg text-gray-600">Get instant shelf life information for any item</p>
+          <div className="max-w-4xl mx-auto animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+            <div className="card p-12 bg-white/90 backdrop-blur-md border-0 shadow-2xl hover:shadow-3xl">
+              <div className="text-center mb-10">
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">Quick Freshness Check</h3>
+                <p className="text-xl text-gray-600">Get instant shelf life information for any item</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row gap-5 mb-10">
                 <input
                   type="text"
                   value={quickItem}
                   onChange={(e) => setQuickItem(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="e.g., leftover beef stew, bananas, milk..."
-                  className="flex-1 px-6 py-4 rounded-2xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 text-lg placeholder-gray-400 transition-all duration-200"
+                  className="flex-1 px-6 py-5 rounded-2xl border-2 border-gray-200 focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-100 text-lg placeholder-gray-400 transition-all duration-300 shadow-sm focus:shadow-md"
                   disabled={isLoading}
                 />
                 <button
                   onClick={handleQuickCheck}
                   disabled={isLoading || !quickItem.trim()}
-                  className="px-8 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-semibold transition-all duration-200 flex items-center justify-center min-w-[120px] shadow-lg hover:shadow-xl"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-10 py-5 text-lg font-semibold rounded-2xl transition-colors duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px] transform hover:scale-105"
                 >
                   {isLoading ? (
                     <ButtonSpinner color="white" />
                   ) : (
-                    'Check'
+                    'Check Freshness'
                   )}
                 </button>
               </div>
