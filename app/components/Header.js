@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import AuthButton from "./AuthButton"
+import AuthButtonClient from "./AuthButtonClient"
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -89,16 +89,11 @@ export default function Header() {
                   </Link>
                 ))}
               </nav>
-              <AuthButton />
+              <AuthButtonClient />
             </div>
 
-            {/* Mobile Menu Button & Auth */}
-            <div className="flex items-center gap-3 lg:hidden">
-              {/* Compact Auth for Mobile */}
-              <div className="scale-90">
-                <AuthButton compact />
-              </div>
-              
+            {/* Mobile Menu Button */}
+            <div className="flex items-center lg:hidden">
               {/* Hamburger Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -112,13 +107,13 @@ export default function Header() {
               >
                 <div className="w-6 h-6 relative">
                   <span className={`absolute block h-0.5 w-6 bg-current transition-all duration-300 ${
-                    isMobileMenuOpen ? 'rotate-45 top-3' : 'top-1.5'
+                    isMobileMenuOpen ? 'rotate-45 top-2.5' : 'top-1'
                   }`}></span>
-                  <span className={`absolute block h-0.5 w-6 bg-current transition-all duration-300 top-3 ${
+                  <span className={`absolute block h-0.5 w-6 bg-current transition-all duration-300 top-2.5 ${
                     isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
                   }`}></span>
                   <span className={`absolute block h-0.5 w-6 bg-current transition-all duration-300 ${
-                    isMobileMenuOpen ? '-rotate-45 top-3' : 'top-4.5'
+                    isMobileMenuOpen ? '-rotate-45 top-2.5' : 'top-4'
                   }`}></span>
                 </div>
               </button>
@@ -129,16 +124,14 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+        <div className="fixed inset-0 z-40 lg:hidden">
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
           ></div>
           
           {/* Mobile Menu Panel */}
-          <div 
-            className="absolute top-16 right-0 left-0 bg-gradient-to-b from-green-50/95 to-emerald-50/95 backdrop-blur-md border-b border-emerald-200/50 shadow-lg animate-slide-in-right"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="absolute top-16 right-0 left-0 bg-white shadow-lg z-50">
             <nav className="px-4 py-6 space-y-1 max-w-md mx-auto">
               {navLinks.map((link, index) => (
                 <Link 
@@ -177,6 +170,21 @@ export default function Header() {
                 >
                   <span className="text-xl w-8 text-center">📸</span>
                   <span>Scan Receipt</span>
+                </Link>
+              </div>
+              
+              {/* Mobile Auth Section */}
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <div className="px-4 py-2">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Account</p>
+                </div>
+                <Link 
+                  href="/profile"
+                  className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span className="text-xl w-8 text-center">👤</span>
+                  <span>Profile / Sign In</span>
                 </Link>
               </div>
             </nav>
