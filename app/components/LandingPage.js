@@ -255,110 +255,143 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp, sessi
 
           {/* Quick Check Section */}
           <div
-            className="max-w-4xl mx-auto animate-fade-in-up"
+            className="max-w-5xl mx-auto animate-fade-in-up mt-20"
             style={{ animationDelay: "0.6s" }}
           >
-            <div className="card p-12 bg-white/90 backdrop-blur-md border-0 shadow-2xl hover:shadow-3xl">
-              <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                  Quick Freshness Check
-                </h3>
-                <p className="text-xl text-gray-600">
-                  Get instant shelf life information for any item
-                </p>
-              </div>
+            <div className="group relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+              <div className="relative bg-white rounded-3xl p-10 shadow-2xl border border-gray-100">
+                <div className="text-center mb-12">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-lg mb-6 transform -rotate-3">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-4xl font-bold text-gray-900 mb-4">
+                    Quick Freshness Check
+                  </h3>
+                  <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Instantly discover how long any food item stays fresh with AI-powered insights
+                  </p>
+                </div>
 
-              <div className="flex flex-col sm:flex-row gap-5 mb-10">
-                <input
-                  type="text"
-                  value={quickItem}
-                  onChange={(e) => setQuickItem(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="e.g., leftover beef stew, bananas, milk..."
-                  className="flex-1 px-6 py-5 rounded-2xl border-2 border-gray-200 focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-100 text-lg placeholder-gray-400 transition-all duration-300 shadow-sm focus:shadow-md"
-                  disabled={isLoading}
-                />
-                <button
-                  onClick={handleQuickCheck}
-                  disabled={isLoading || !quickItem.trim()}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white  px-10 py-5 text-lg font-semibold rounded-2xl transition-colors duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px] transform hover:scale-105"
-                >
-                  {isLoading ? (
-                    <ButtonSpinner color="white" />
-                  ) : (
-                    "Check Freshness"
-                  )}
-                </button>
-              </div>
+                <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                  <div className="relative flex-1">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={quickItem}
+                      onChange={(e) => setQuickItem(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Try 'leftover pizza', 'fresh strawberries', or 'opened yogurt'..."
+                      className="w-full pl-14 pr-6 py-5 rounded-2xl border-2 border-gray-200 hover:border-gray-300 focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-100 text-lg placeholder-gray-400 transition-all duration-300 shadow-sm hover:shadow-md focus:shadow-lg bg-white"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <button
+                    onClick={handleQuickCheck}
+                    disabled={isLoading || !quickItem.trim()}
+                    className="group relative px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-lg font-bold rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 min-w-[200px] transform hover:scale-105 hover:from-emerald-600 hover:to-green-700"
+                  >
+                    {isLoading ? (
+                      <ButtonSpinner color="white" />
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Check Now
+                      </>
+                    )}
+                  </button>
+                </div>
 
               {/* Quick Answer Display */}
               {quickAnswer && (
-                <div className="bg-gradient-to-br from-white/70 to-green-50/70 backdrop-blur-sm rounded-3xl p-8 border-2 border-green-200/50 shadow-xl">
-                  {quickAnswer.error ? (
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">❌</span>
-                      </div>
-                      <p className="text-red-700 font-medium">
-                        {quickAnswer.message}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start gap-6 mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-200 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                          <span className="text-3xl">🥗</span>
+                <div className="relative mt-8">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-green-400 rounded-2xl blur opacity-20"></div>
+                  <div className="relative bg-gradient-to-br from-white to-emerald-50/30 rounded-2xl p-8 border border-emerald-200/50 shadow-xl">
+                    {quickAnswer.error ? (
+                      <div className="text-center py-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-900 text-xl mb-3">
-                            {quickAnswer.name}
-                          </h4>
-                          <div className="bg-white/60 rounded-xl p-4 mb-4 border border-green-100">
-                            <p className="text-gray-800 leading-relaxed">
-                              {quickAnswer.answer}
-                            </p>
+                        <p className="text-red-700 font-semibold text-lg">
+                          {quickAnswer.message}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-6 mb-6">
+                          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg transform -rotate-3">
+                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </div>
-                          {quickAnswer.storageRecommendations && (
-                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200/50">
-                              <p className="text-green-800 text-sm font-medium flex items-start gap-2">
-                                <span className="text-lg">💡</span>
-                                <span>
-                                  {quickAnswer.storageRecommendations}
-                                </span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 text-2xl mb-4">
+                              {quickAnswer.name}
+                            </h4>
+                            <div className="bg-white/80 rounded-xl p-5 mb-4 border border-emerald-100 shadow-sm">
+                              <p className="text-gray-700 leading-relaxed text-lg">
+                                {quickAnswer.answer}
                               </p>
                             </div>
-                          )}
+                            {quickAnswer.storageRecommendations && (
+                              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-5 border border-emerald-200/50">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-700 mb-1">Storage Tip</p>
+                                    <p className="text-gray-600 text-sm leading-relaxed">
+                                      {quickAnswer.storageRecommendations}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex justify-center">
-                        <button
-                          onClick={handleAddToList}
-                          className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl hover:from-green-700 hover:to-emerald-700 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                          <svg
-                            className="w-5 h-5 mr-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <div className="flex justify-center pt-4">
+                          <button
+                            onClick={handleAddToList}
+                            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-2xl hover:from-emerald-700 hover:to-green-700 font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg gap-3"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                          Add to My List
-                        </button>
-                      </div>
-                    </>
-                  )}
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2.5}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            Add to My List
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
-
         </div>
       </main>
     </div>
