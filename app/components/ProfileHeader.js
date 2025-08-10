@@ -5,30 +5,38 @@ export default function ProfileHeader({ user }) {
   return (
     <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-3xl mb-8 border border-green-100">
       <div className="px-6 py-8">
-        <div className="flex items-center space-x-6">
-          {user?.image ? (
-            <Image
-              src={user.image}
-              alt={user.name || "Profile"}
-              width={96}
-              height={96}
-              className="w-24 h-24 rounded-full ring-4 ring-green-200 shadow-lg"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-green-200 shadow-lg">
-              {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
+        <div className="flex flex-col lg:flex-row lg:items-center space-y-6 lg:space-y-0 lg:space-x-6">
+          <div className="flex items-center space-x-6">
+            {user?.image ? (
+              <Image
+                src={user.image}
+                alt={user.name || "Profile"}
+                width={96}
+                height={96}
+                className="w-24 h-24 rounded-full ring-4 ring-green-200 shadow-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-green-200 shadow-lg">
+                {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {user?.name || 'Welcome'}
+              </h1>
+              <p className="text-lg text-gray-600 mb-1">{user?.email}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0">
+                <p className="text-sm text-gray-500">Member since January 2025</p>
+                <span className="hidden sm:block text-gray-300">•</span>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Google OAuth
+                </span>
+              </div>
             </div>
-          )}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {user?.name || 'Welcome'}
-            </h1>
-            <p className="text-lg text-gray-600 mb-1">{user?.email}</p>
-            <p className="text-sm text-gray-500">Member since January 2025</p>
           </div>
           
-          {/* Sign Out Button */}
-          <div>
+          {/* Sign Out Button - Better positioned on mobile */}
+          <div className="flex justify-start lg:justify-end">
             <form action={signOutAction}>
               <button
                 type="submit"
@@ -40,25 +48,6 @@ export default function ProfileHeader({ user }) {
                 Sign Out
               </button>
             </form>
-          </div>
-        </div>
-      </div>
-      
-      {/* Account Information for Settings Tab */}
-      <div className="border-t border-green-100 px-6 py-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">Account Information</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
-            <div className="mt-1 text-sm text-gray-900">{user?.name || 'Not provided'}</div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <div className="mt-1 text-sm text-gray-900">{user?.email}</div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Account Type</label>
-            <div className="mt-1 text-sm text-gray-900">Google OAuth</div>
           </div>
         </div>
       </div>
