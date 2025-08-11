@@ -197,7 +197,7 @@ export default function About() {
       <div className="max-w-7xl mx-auto px-4 py-20">
         <h2 className="text-4xl font-bold text-center mb-4">Why I Built My Expiry</h2>
         <p className="text-xl text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-          The real story behind this open-source project — I'm the real product here
+          The real story behind this open-source project — I&apos;m the real product here
         </p>
         
         <div className="bg-gradient-to-br from-gray-900 to-emerald-900 rounded-3xl p-12 text-white relative overflow-hidden">
@@ -215,7 +215,7 @@ export default function About() {
               </div>
               
               <p className="text-lg leading-relaxed mb-6 text-gray-100">
-                From the suburbs of Chicago to Bloomington, Indiana, I've transformed from an award-winning investigative 
+                From the suburbs of Chicago to Bloomington, Indiana, I&apos;ve transformed from an award-winning investigative 
                 journalist into a passionate full-stack developer. After earning Reporter of the Year (2020) and Writer of 
                 the Year (2021) honors, I transitioned to tech in 2022 to merge storytelling with code.
               </p>
