@@ -34,8 +34,6 @@ export default function TrackingPage() {
   const [editingItem, setEditingItem] = useState(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [infoItem, setInfoItem] = useState(null)
-  const [costAnalysis, setCostAnalysis] = useState(null)
-  const [isLoadingCostAnalysis, setIsLoadingCostAnalysis] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [pendingAIResult, setPendingAIResult] = useState(null)
   const [additionalDetails, setAdditionalDetails] = useState('')
@@ -322,7 +320,6 @@ export default function TrackingPage() {
         ...results,
         items: results.items.map(item => ({
           ...item,
-          accepted: true, // Default to accepted
           purchaseDate: new Date().toISOString().split('T')[0],
           isLeftover: false // Default leftover to false
         }))
@@ -375,13 +372,61 @@ export default function TrackingPage() {
   const handleBatchItemAction = (index, action) => {
     if (!pendingBatchResults) return
     
-    const updatedResults = {
-      ...pendingBatchResults,
-      items: pendingBatchResults.items.map((item, i) => 
-        i === index ? { ...item, accepted: action === 'accept' } : item
-      )
+    if (action === 'accept') {
+      // Add this specific item to inventory
+      const item = pendingBatchResults.items[index]
+      const newGrocery = {
+        id: Date.now().toString() + Math.random(),
+        ...item,
+        addedDate: new Date().toISOString(),
+        daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
+      }
+      
+      const updatedGroceries = [...groceries, newGrocery]
+      const updatedActivities = [
+        {
+          id: Date.now().toString() + Math.random(),
+          action: 'Added',
+          item: item.name,
+          time: new Date().toISOString(),
+          type: 'added'
+        },
+        ...activities
+      ].slice(0, 50)
+      
+      setGroceries(updatedGroceries)
+      setActivities(updatedActivities)
+      saveToLocalStorage(updatedGroceries, updatedActivities)
+      
+      // Remove from pending list
+      const updatedResults = {
+        ...pendingBatchResults,
+        items: pendingBatchResults.items.filter((_, i) => i !== index)
+      }
+      setPendingBatchResults(updatedResults)
+      
+      // If no items left, close the modal
+      if (updatedResults.items.length === 0) {
+        setShowBatchConfirmModal(false)
+        setPendingBatchResults(null)
+        setBatchItems([])
+      }
+    } else if (action === 'remove' || action === 'reject') {
+      // Just remove the item from the list without adding to inventory
+      const updatedResults = {
+        ...pendingBatchResults,
+        items: pendingBatchResults.items.filter((_, i) => i !== index)
+      }
+      setPendingBatchResults(updatedResults)
+      
+      // If no items left, close the modal
+      if (updatedResults.items.length === 0) {
+        setShowBatchConfirmModal(false)
+        setPendingBatchResults(null)
+        setBatchItems([])
+      }
     }
-    setPendingBatchResults(updatedResults)
   }
 
   const handleToggleBatchLeftover = (index) => {
@@ -396,30 +441,11 @@ export default function TrackingPage() {
     setPendingBatchResults(updatedResults)
   }
 
-  const handleEditBatchItem = (index) => {
+  const handleAcceptAllBatch = () => {
     if (!pendingBatchResults) return
     
-    const item = pendingBatchResults.items[index]
-    setFormData({
-      name: item.name,
-      category: item.category,
-      expiryDate: item.expiryDate,
-      purchaseDate: item.purchaseDate,
-      shelfLifeDays: item.shelfLifeDays,
-      addedManually: false,
-      isLeftover: item.isLeftover || false
-    })
-    setEditingItem({ ...item, batchIndex: index }) // Store batch index
-    setShowBatchConfirmModal(false)
-    setShowEditModal(true)
-  }
-
-  const handleConfirmBatch = () => {
-    if (!pendingBatchResults) return
-    
-    const acceptedItems = pendingBatchResults.items.filter(item => item.accepted)
-    
-    const newGroceries = acceptedItems.map(item => ({
+    // Add all items to inventory
+    const newGroceries = pendingBatchResults.items.map(item => ({
       id: Date.now().toString() + Math.random(),
       ...item,
       addedDate: new Date().toISOString(),
@@ -447,10 +473,40 @@ export default function TrackingPage() {
     setActivities(updatedActivities)
     saveToLocalStorage(updatedGroceries, updatedActivities)
     
-    setBatchItems('')
+    // Close modal and reset
     setShowBatchConfirmModal(false)
     setPendingBatchResults(null)
+    setBatchItems([])
   }
+
+  const handleRejectAllBatch = () => {
+    if (!pendingBatchResults) return
+    
+    // Just close the modal without adding anything
+    setShowBatchConfirmModal(false)
+    setPendingBatchResults(null)
+    setBatchItems([])
+  }
+
+  const handleEditBatchItem = (index) => {
+    if (!pendingBatchResults) return
+    
+    const item = pendingBatchResults.items[index]
+    setFormData({
+      name: item.name,
+      category: item.category,
+      expiryDate: item.expiryDate,
+      purchaseDate: item.purchaseDate,
+      shelfLifeDays: item.shelfLifeDays,
+      addedManually: false,
+      isLeftover: item.isLeftover || false
+    })
+    setEditingItem({ ...item, batchIndex: index }) // Store batch index
+    setShowBatchConfirmModal(false)
+    setShowEditModal(true)
+  }
+
+  // Removed handleConfirmBatch - no longer needed as individual items are handled immediately
 
 
   const handleMarkAsEaten = (id) => {
@@ -508,35 +564,13 @@ export default function TrackingPage() {
     saveToLocalStorage(groceries, activities, updatedArchived)
   }
 
-  const handleGetCostAnalysis = async () => {
-    if (archivedItems.length === 0) return
-
-    setIsLoadingCostAnalysis(true)
-    try {
-      const response = await fetch('/api/cost-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          archivedItems: archivedItems,
-          activeItems: groceries.length 
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to get cost analysis')
-      
-      const result = await response.json()
-      setCostAnalysis(result)
-    } catch (error) {
-      console.error('Error getting cost analysis:', error)
-      // Set a fallback analysis if API fails
-      setCostAnalysis({
-        error: true,
-        message: 'Unable to calculate cost analysis at this time.'
-      })
-    } finally {
-      setIsLoadingCostAnalysis(false)
+  const handleRemoveAllArchived = () => {
+    if (window.confirm('Are you sure you want to remove all archived items? This cannot be undone.')) {
+      setArchivedItems([])
+      saveToLocalStorage(groceries, activities, [])
     }
   }
+
 
   const handleEditItem = (item) => {
     setEditingItem(item)
@@ -1181,16 +1215,26 @@ export default function TrackingPage() {
             <div className="group relative mb-8">
               <div className="absolute -inset-1 bg-gradient-to-r from-gray-500 via-slate-500 to-gray-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
               <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">Archived Inventory</h3>
+                      <p className="text-sm text-gray-600">{archivedItems.length} items completed</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900">Archived Inventory</h3>
-                    <p className="text-sm text-gray-600">{archivedItems.length} items completed</p>
-                  </div>
+                  {archivedItems.length > 0 && (
+                    <button
+                      onClick={() => handleRemoveAllArchived()}
+                      className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-all duration-200"
+                    >
+                      Remove All
+                    </button>
+                  )}
                 </div>
                 
                 {archivedItems.length > 0 ? (
@@ -1199,7 +1243,7 @@ export default function TrackingPage() {
                       <div key={item.id} className="group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-md bg-gray-50 border border-gray-200">
                         {/* Status indicator */}
                         <div className={`absolute top-0 left-0 w-full h-1 ${
-                          item.archivedStatus === 'consumed' ? 'bg-green-500' : 'bg-orange-500'
+                          item.archivedStatus === 'consumed' ? 'bg-green-500' : 'bg-red-500'
                         }`}></div>
                         
                         <div className="p-4 flex flex-col gap-4">
@@ -1223,7 +1267,7 @@ export default function TrackingPage() {
                               <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                                 item.archivedStatus === 'consumed' 
                                   ? 'bg-green-100 text-green-700' 
-                                  : 'bg-orange-100 text-orange-700'
+                                  : 'bg-red-100 text-red-700'
                               }`}>
                                 {item.archivedStatus === 'consumed' ? 'Consumed' : 'Discarded'}
                               </span>
@@ -1283,77 +1327,6 @@ export default function TrackingPage() {
               </div>
             </div>
 
-            {/* Cost Analysis Section */}
-            {archivedItems.length > 0 && (
-              <div className="group relative mb-8">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Impact Analysis</h3>
-                        <p className="text-sm text-gray-600">See how you&apos;re doing compared to average</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => alert('Coming soon! We\'re working on bringing you detailed cost analysis and food waste insights.')}
-                      className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg font-medium w-full sm:w-auto"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      Get Analysis
-                    </button>
-                    <p className="text-xs text-gray-400 text-center mt-2">Coming Soon</p>
-                  </div>
-
-                  {costAnalysis ? (
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
-                      {costAnalysis.error ? (
-                        <div className="text-center py-4">
-                          <p className="text-red-700 font-semibold">{costAnalysis.message}</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h4 className="text-xl font-bold text-gray-900 mb-2">Your Impact</h4>
-                            <p className="text-gray-700 leading-relaxed">{costAnalysis.analysis}</p>
-                          </div>
-                          
-                          {costAnalysis.savings && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                              <div className="bg-white/80 rounded-lg p-4 text-center border border-green-200 flex flex-col items-center justify-center">
-                                <div className="text-xl sm:text-2xl font-bold text-green-600">${costAnalysis.savings}</div>
-                                <div className="text-sm text-gray-600 mt-1">Estimated Savings</div>
-                              </div>
-                              <div className="bg-white/80 rounded-lg p-4 text-center border border-orange-200 flex flex-col items-center justify-center">
-                                <div className="text-xl sm:text-2xl font-bold text-orange-600">${costAnalysis.waste || 0}</div>
-                                <div className="text-sm text-gray-600 mt-1">Food Waste Cost</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                      </div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Ready for Analysis</h4>
-                      <p className="text-gray-500 mb-4">Get insights on your food waste habits and savings</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Final CTA Section */}
             <div className="group relative mb-8">
@@ -1620,15 +1593,28 @@ export default function TrackingPage() {
             <div className="bg-white rounded-2xl p-6 w-full max-w-5xl max-h-[85vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Review Batch Items</h2>
               
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-gray-600 mb-4">
                 Review each item below. You can accept, reject, or edit individual items, and mark any as leftovers.
               </p>
 
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={handleAcceptAllBatch}
+                  className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 font-medium text-sm border border-emerald-300"
+                >
+                  Accept All
+                </button>
+                <button
+                  onClick={handleRejectAllBatch}
+                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium text-sm border border-red-300"
+                >
+                  Reject All
+                </button>
+              </div>
+
               <div className="space-y-4 mb-6">
                 {pendingBatchResults.items.map((item, index) => (
-                  <div key={index} className={`p-5 rounded-xl border transition-all bg-white ${
-                    item.accepted ? 'border-emerald-300 shadow-md' : 'border-gray-300 opacity-75'
-                  }`}>
+                  <div key={index} className="p-5 rounded-xl border transition-all bg-white border-gray-300 shadow-sm hover:shadow-md">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -1683,14 +1669,10 @@ export default function TrackingPage() {
 
                     <div className="flex gap-2 pt-2 border-t border-gray-200">
                       <button
-                        onClick={() => handleBatchItemAction(index, 'reject')}
-                        className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 border ${
-                          !item.accepted 
-                            ? 'bg-red-100 text-red-700 border-red-300' 
-                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
-                        }`}
+                        onClick={() => handleBatchItemAction(index, 'accept')}
+                        className="flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300"
                       >
-                        {!item.accepted ? 'Rejected' : 'Reject'}
+                        Accept & Add
                       </button>
                       <button
                         onClick={() => handleEditBatchItem(index)}
@@ -1699,14 +1681,10 @@ export default function TrackingPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleBatchItemAction(index, 'accept')}
-                        className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 border ${
-                          item.accepted 
-                            ? 'bg-emerald-100 text-emerald-700 border-emerald-300' 
-                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
-                        }`}
+                        onClick={() => handleBatchItemAction(index, 'reject')}
+                        className="py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 bg-red-50 text-red-700 hover:bg-red-100 border border-red-300"
                       >
-                        {item.accepted ? 'Accepted' : 'Accept'}
+                        Reject
                       </button>
                     </div>
                   </div>
@@ -1715,7 +1693,7 @@ export default function TrackingPage() {
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-600">
-                  {pendingBatchResults.items.filter(item => item.accepted).length} of {pendingBatchResults.items.length} items will be added
+                  {pendingBatchResults.items.length} items remaining to review
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -1727,13 +1705,6 @@ export default function TrackingPage() {
                     className="px-6 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
                   >
                     Back to Edit
-                  </button>
-                  <button
-                    onClick={handleConfirmBatch}
-                    disabled={pendingBatchResults.items.filter(item => item.accepted).length === 0}
-                    className="px-6 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  >
-                    Add Selected Items ({pendingBatchResults.items.filter(item => item.accepted).length})
                   </button>
                 </div>
               </div>
