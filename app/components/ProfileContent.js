@@ -1,10 +1,66 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
-export default function ProfileContent() {
+export default function ProfileContent({ isGuest = false }) {
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [showViewMenu, setShowViewMenu] = useState(false)
+  const [groceries, setGroceries] = useState([])
+  const [activities, setActivities] = useState([])
+  const [stats, setStats] = useState({
+    total: 0,
+    fresh: 0,
+    expiringSoon: 0,
+    expired: 0
+  })
+
+  const calculateStats = (groceriesList) => {
+    const now = new Date()
+    const stats = {
+      total: groceriesList.length,
+      fresh: 0,
+      expiringSoon: 0,
+      expired: 0
+    }
+
+    groceriesList.forEach(item => {
+      const expiryDate = new Date(item.expiryDate)
+      const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24))
+      
+      if (daysUntilExpiry < 0) {
+        stats.expired++
+      } else if (daysUntilExpiry <= 3) {
+        stats.expiringSoon++
+      } else {
+        stats.fresh++
+      }
+    })
+
+    return stats
+  }
+
+  useEffect(() => {
+    if (isGuest) {
+      // Load data from localStorage for guest users
+      const storedGroceries = JSON.parse(localStorage.getItem('groceries') || '[]')
+      const storedActivities = JSON.parse(localStorage.getItem('activities') || '[]')
+      setGroceries(storedGroceries)
+      setActivities(storedActivities)
+      setStats(calculateStats(storedGroceries))
+    }
+  }, [isGuest])
+
+  // For guest users on tracking page, these handlers are not used
+  // The tracking page has its own built-in functionality
+  const handleAddOption = (option) => {
+    // Placeholder for authenticated users
+    console.log('Add option selected:', option)
+  }
+
+  const handleViewOption = (option) => {
+    // Placeholder for authenticated users  
+    console.log('View option selected:', option)
+  }
 
   return (
     <>
@@ -35,23 +91,33 @@ export default function ProfileContent() {
             
             {showAddMenu && (
               <div className="p-6 border-t border-green-100 space-y-3">
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleAddOption('upload')}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors"
+                >
                   <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="font-medium text-gray-900">Upload Photo</span>
+                  <span className="font-medium text-gray-900">Upload Receipt/Photo</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleAddOption('single')}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors"
+                >
                   <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span className="font-medium text-gray-900">Single Add</span>
+                  <span className="font-medium text-gray-900">Add Single Item</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleAddOption('multiple')}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-green-50 rounded-xl transition-colors"
+                >
                   <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <span className="font-medium text-gray-900">Multiple Add</span>
+                  <span className="font-medium text-gray-900">Add Multiple Items</span>
                 </button>
               </div>
             )}
@@ -83,17 +149,23 @@ export default function ProfileContent() {
             
             {showViewMenu && (
               <div className="p-6 border-t border-blue-100 space-y-3">
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-blue-50 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleViewOption('active')}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-blue-50 rounded-xl transition-colors"
+                >
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  <span className="font-medium text-gray-900">Active Lists</span>
+                  <span className="font-medium text-gray-900">Active Items</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-blue-50 rounded-xl transition-colors">
+                <button 
+                  onClick={() => handleViewOption('expired')}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-blue-50 rounded-xl transition-colors"
+                >
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="font-medium text-gray-900">Past Lists</span>
+                  <span className="font-medium text-gray-900">Expired Items</span>
                 </button>
               </div>
             )}
@@ -116,22 +188,22 @@ export default function ProfileContent() {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
-              <div className="text-2xl font-bold text-green-600">24</div>
+              <div className="text-2xl font-bold text-green-600">{stats.total}</div>
               <div className="text-xs text-gray-600 mt-1">Active Items</div>
             </div>
             
             <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-100">
-              <div className="text-2xl font-bold text-blue-600">18</div>
+              <div className="text-2xl font-bold text-blue-600">{stats.fresh}</div>
               <div className="text-xs text-gray-600 mt-1">Fresh</div>
             </div>
             
             <div className="text-center p-3 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100">
-              <div className="text-2xl font-bold text-amber-600">3</div>
+              <div className="text-2xl font-bold text-amber-600">{stats.expiringSoon}</div>
               <div className="text-xs text-gray-600 mt-1">Expiring Soon</div>
             </div>
             
             <div className="text-center p-3 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-100">
-              <div className="text-2xl font-bold text-red-600">2</div>
+              <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
               <div className="text-xs text-gray-600 mt-1">Expired</div>
             </div>
           </div>
@@ -151,16 +223,7 @@ export default function ProfileContent() {
             <h3 className="text-2xl font-bold text-gray-900">Recent Activity</h3>
           </div>
           <div className="space-y-3">
-            {[
-              { action: 'Added', item: 'Organic Milk', time: '2 hours ago', type: 'add' },
-              { action: 'Ate', item: 'Greek Yogurt', time: '1 day ago', type: 'ate' },
-              { action: 'Added', item: 'Fresh Spinach', time: '2 days ago', type: 'add' },
-              { action: 'Trashed', item: 'Expired Bananas', time: '3 days ago', type: 'trash' },
-              { action: 'Added', item: 'Leftover Pizza', time: '4 days ago', type: 'add' },
-              { action: 'Ate', item: 'Apple Slices', time: '5 days ago', type: 'ate' },
-              { action: 'Trashed', item: 'Moldy Bread', time: '6 days ago', type: 'trash' },
-              { action: 'Added', item: 'Chicken Breast', time: '1 week ago', type: 'add' }
-            ].map((activity, index) => (
+            {activities.length > 0 ? activities.slice(0, 8).map((activity, index) => (
               <div key={index} className="flex items-center space-x-4 p-4 bg-gradient-to-r from-white/80 to-emerald-50/30 rounded-2xl border border-emerald-100/50 hover:shadow-md transition-all duration-200">
                 <div className={`w-4 h-4 rounded-full shadow-sm flex-shrink-0 ${
                   activity.type === 'add' ? 'bg-gradient-to-r from-green-400 to-green-500' :
@@ -204,7 +267,15 @@ export default function ProfileContent() {
                   )}
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-8 text-gray-500">
+                <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>No recent activity</p>
+                <p className="text-sm text-gray-400 mt-1">Start adding items to see your activity</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -224,16 +295,18 @@ export default function ProfileContent() {
               <h3 className="text-2xl font-bold text-gray-900">Settings</h3>
             </div>
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-white/80 to-gray-50/30 rounded-2xl border border-gray-100/50">
-                <div>
-                  <h4 className="text-base font-semibold text-gray-900">Email Notifications</h4>
-                  <p className="text-sm text-gray-600">Get notified about expiring items</p>
-                  <p className="text-xs text-gray-400 mt-1">coming soon</p>
+              {!isGuest && (
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-white/80 to-gray-50/30 rounded-2xl border border-gray-100/50">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">Email Notifications</h4>
+                    <p className="text-sm text-gray-600">Get notified about expiring items</p>
+                    <p className="text-xs text-gray-400 mt-1">coming soon</p>
+                  </div>
+                  <button disabled className="bg-gray-300 relative inline-flex h-6 w-11 flex-shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out opacity-50">
+                    <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                  </button>
                 </div>
-                <button disabled className="bg-gray-300 relative inline-flex h-6 w-11 flex-shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out opacity-50">
-                  <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-                </button>
-              </div>
+              )}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-white/80 to-gray-50/30 rounded-2xl border border-gray-100/50">
                 <div>
                   <h4 className="text-base font-semibold text-gray-900">Dark Mode</h4>
@@ -244,43 +317,47 @@ export default function ProfileContent() {
                   <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                 </button>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-white/80 to-gray-50/30 rounded-2xl border border-gray-100/50">
-                <div>
-                  <h4 className="text-base font-semibold text-gray-900">Auto-Archive</h4>
-                  <p className="text-sm text-gray-600">Automatically move consumed items to past</p>
-                  <p className="text-xs text-gray-400 mt-1">coming soon</p>
+              {!isGuest && (
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-white/80 to-gray-50/30 rounded-2xl border border-gray-100/50">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">Auto-Archive</h4>
+                    <p className="text-sm text-gray-600">Automatically move consumed items to past</p>
+                    <p className="text-xs text-gray-400 mt-1">coming soon</p>
+                  </div>
+                  <button disabled className="bg-gray-300 relative inline-flex h-6 w-11 flex-shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out opacity-50">
+                    <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                  </button>
                 </div>
-                <button disabled className="bg-gray-300 relative inline-flex h-6 w-11 flex-shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out opacity-50">
-                  <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="group relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-rose-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-          <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-red-200">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        {/* Danger Zone - Only show for authenticated users */}
+        {!isGuest && (
+          <div className="group relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-rose-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+            <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-red-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Danger Zone</h3>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">Danger Zone</h3>
-            </div>
-            <div className="p-6 bg-gradient-to-r from-red-50/80 to-rose-50/30 rounded-2xl border-2 border-red-200">
-              <h4 className="text-lg font-bold text-red-800 mb-2">Delete Account</h4>
-              <p className="text-red-700 mb-4">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors duration-200 shadow-md hover:shadow-lg">
-                Delete Account
-              </button>
+              <div className="p-6 bg-gradient-to-r from-red-50/80 to-rose-50/30 rounded-2xl border-2 border-red-200">
+                <h4 className="text-lg font-bold text-red-800 mb-2">Delete Account</h4>
+                <p className="text-red-700 mb-4">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <button className="bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                  Delete Account
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     
     </>

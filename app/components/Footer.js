@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="bg-white border-t-4 border-gray-400 mt-12">
+    <footer className="bg-transparent mt-12">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
@@ -31,7 +31,7 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="border-t-4 border-gray-400 mt-6 pt-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="mt-6 pt-4 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-xs sm:text-sm text-gray-600">© 2025 My Expiry. All rights reserved.</p>
           <div className="flex space-x-3 mt-3 sm:mt-0">
             <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900">Terms</a>
