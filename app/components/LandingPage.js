@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ButtonSpinner } from "./LoadingSpinner";
 import AuthButtonClient from "./AuthButtonClient";
+import { signOutAction } from "@/app/actions/auth";
 
 export default function LandingPage({ onStartTracking, onSignIn, onSignUp, session }) {
   const [quickItem, setQuickItem] = useState("");
@@ -181,6 +182,26 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp, sessi
                 </a>
               )}
             </div>
+
+            {/* Sign Out Button - Only show for authenticated users on larger screens */}
+            {session && (
+              <div
+                className="flex justify-center mt-8 animate-fade-in-up"
+                style={{ animationDelay: "0.6s" }}
+              >
+                <form action={signOutAction}>
+                  <button 
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-xl border border-red-200 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </form>
+              </div>
+            )}
 
             {/* Benefits Section */}
             <div className="mt-20 grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">

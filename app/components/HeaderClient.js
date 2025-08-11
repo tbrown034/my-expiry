@@ -50,7 +50,7 @@ export default function HeaderClient({ session }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-18">
             {/* Logo */}
@@ -97,16 +97,16 @@ export default function HeaderClient({ session }) {
               {session ? (
                 <Link
                   href="/profile"
-                  className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border border-emerald-200 rounded-xl transition-all duration-300 group"
+                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border border-emerald-200 rounded-lg transition-all duration-300 group"
                 >
                   {session.user?.image && (
                     <img 
                       src={session.user.image} 
                       alt="Profile" 
-                      className="w-7 h-7 rounded-lg border border-emerald-300"
+                      className="w-6 h-6 rounded-md border border-emerald-300"
                     />
                   )}
-                  <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-700">
+                  <span className="text-xs font-semibold text-gray-700 group-hover:text-emerald-700">
                     My Account
                   </span>
                 </Link>
@@ -125,17 +125,6 @@ export default function HeaderClient({ session }) {
 
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-3 lg:hidden">
-              {/* Mobile Profile Avatar (if signed in) */}
-              {session?.user?.image && (
-                <Link href="/profile" className="block">
-                  <img 
-                    src={session.user.image} 
-                    alt="Profile" 
-                    className="w-8 h-8 rounded-lg border border-emerald-300 hover:opacity-80 transition-opacity cursor-pointer"
-                  />
-                </Link>
-              )}
-              
               {/* Hamburger Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
