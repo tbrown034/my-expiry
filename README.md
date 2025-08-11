@@ -46,9 +46,36 @@ A Next.js application for tracking grocery items and reducing food waste.
 - **Deployment**: Vercel
 
 ## Features
-- Google OAuth authentication
-- User management dashboard
-- Grocery tracking (schema ready)
+- AI-powered grocery shelf life detection
+- Smart expiry date tracking
+- Batch item processing
+- Receipt scanning (coming soon)
+- Real-time freshness analysis
+
+## Branch Strategy
+
+### `mvp` Branch (Production/Demo)
+- **Purpose**: Clean, production-ready version for job applications and demos
+- **Features**: Full grocery tracking functionality without authentication
+- **Storage**: Uses localStorage for data persistence
+- **UI**: Professional, polished interface with "Coming Soon" placeholders for auth features
+- **Deploy**: This branch is deployed to production
+
+### `wip-full` Branch (Full Feature Development)
+- **Purpose**: Complete implementation with NextAuth.js authentication system
+- **Features**: Full user authentication, database integration, user management
+- **Storage**: PostgreSQL database with Prisma ORM
+- **Status**: Work in progress - auth implementation preserved for future development
+- **Note**: Contains full sign-in/sign-up system, admin dashboard, and user management
+
+### `main` Branch
+- **Purpose**: Stable base branch for creating new features
+- **Status**: Clean starting point for both MVP and full implementations
+
+**Usage Notes**:
+- Use `mvp` branch for demos, job applications, and production deployments
+- Use `wip-full` branch to continue development of authentication features
+- Create new feature branches from `main` when needed
 
 ## Development Log
 

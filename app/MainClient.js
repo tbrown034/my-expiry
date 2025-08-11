@@ -17,7 +17,7 @@ import FunAlert from './components/FunAlert';
 import { storage } from '../lib/storage';
 import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
 
-export default function MainClient({ session }) {
+export default function MainClient() {
   const [groceries, setGroceries] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBatchForm, setShowBatchForm] = useState(false);
@@ -286,16 +286,12 @@ export default function MainClient({ session }) {
   };
 
   const handleStartTracking = (quickAnswerItem = null) => {
-    // Redirect to profile if signed in, otherwise to tracking page
-    if (session) {
-      window.location.href = '/profile';
-    } else {
-      if (quickAnswerItem) {
-        // Store the quick answer item in localStorage for the tracking page
-        localStorage.setItem('quickAnswerItem', JSON.stringify(quickAnswerItem));
-      }
-      window.location.href = '/tracking';
+    // Always go to tracking functionality
+    if (quickAnswerItem) {
+      // Store the quick answer item in localStorage for the tracking page
+      localStorage.setItem('quickAnswerItem', JSON.stringify(quickAnswerItem));
     }
+    window.location.href = '/tracking';
   };
 
   const handleSignIn = () => {
@@ -334,7 +330,6 @@ export default function MainClient({ session }) {
           onStartTracking={handleStartTracking}
           onSignIn={handleSignIn}
           onSignUp={handleSignUp}
-          session={session}
         />
         <Toast
           message={toast.message}
@@ -437,30 +432,24 @@ export default function MainClient({ session }) {
             </div>
           </button>
 
-          <button
-            onClick={() => setShowDocumentUpload(true)}
-            className="relative bg-white/95 backdrop-blur-sm border border-purple-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
-          >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-pink-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+          <div className="relative bg-gray-50 border border-gray-200 rounded-2xl shadow-md p-6 text-left overflow-hidden opacity-60">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400"></div>
             <div className="flex items-start gap-4">
-              <div className="relative w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
+              <div className="relative w-14 h-14 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center shadow-lg">
                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-purple-700 transition-colors">Take a Photo</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">Take a photo of your receipt for AI recognition</p>
-                <div className="flex items-center gap-2 mt-3 text-xs text-purple-600 font-medium">
-                  <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-                  PDF Support
+                <h3 className="font-bold text-gray-700 text-lg mb-2">Take a Photo</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">Take a photo of your receipt for AI recognition</p>
+                <div className="flex items-center gap-2 mt-3 text-xs text-gray-500 font-medium">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  Coming Soon
                 </div>
               </div>
             </div>
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-emerald-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-              NEW
-            </div>
-          </button>
+          </div>
         </div>
 
         {showAddForm && (

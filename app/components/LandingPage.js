@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { ButtonSpinner } from "./LoadingSpinner";
 import AuthButtonClient from "./AuthButtonClient";
-import { signOutAction } from "@/app/actions/auth";
-
-export default function LandingPage({ onStartTracking, onSignIn, onSignUp, session }) {
+export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
   const [quickItem, setQuickItem] = useState("");
   const [quickAnswer, setQuickAnswer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -141,67 +139,19 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp, sessi
                 </svg>
               </button>
               
-              {session ? (
-                <a
-                  href="/profile"
-                  className="inline-flex items-center gap-3 px-8 py-5 bg-white/90 backdrop-blur-sm border-2 border-emerald-300 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+              <div className="inline-flex items-center gap-3 px-10 py-5 bg-gray-50 border-2 border-gray-200 rounded-2xl cursor-not-allowed opacity-60 font-bold text-lg">
+                <svg 
+                  className="w-6 h-6 text-gray-400" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
                 >
-                  {session.user?.image && (
-                    <img 
-                      src={session.user.image} 
-                      alt="Profile" 
-                      className="w-10 h-10 rounded-full border-2 border-emerald-400"
-                    />
-                  )}
-                  <span className="text-lg font-bold text-gray-800 group-hover:text-emerald-700">
-                    My Profile
-                  </span>
-                  <svg 
-                    className="w-5 h-5 text-gray-500 group-hover:text-emerald-600 transition-colors" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </a>
-              ) : (
-                <a
-                  href="/auth/signin"
-                  className="inline-flex items-center gap-3 px-10 py-5 bg-white/90 backdrop-blur-sm border-2 border-emerald-300 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl font-bold text-lg"
-                >
-                  <svg 
-                    className="w-6 h-6 text-emerald-600" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="text-gray-800">Sign In</span>
-                </a>
-              )}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-gray-500">User Accounts - Coming Soon!</span>
+              </div>
             </div>
 
-            {/* Sign Out Button - Only show for authenticated users on larger screens */}
-            {session && (
-              <div
-                className="flex justify-center mt-8 animate-fade-in-up"
-                style={{ animationDelay: "0.6s" }}
-              >
-                <form action={signOutAction}>
-                  <button 
-                    type="submit"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-xl border border-red-200 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Sign Out
-                  </button>
-                </form>
-              </div>
-            )}
 
             {/* Benefits Section */}
             <div className="mt-20 grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
