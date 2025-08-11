@@ -33,32 +33,42 @@ async function getShelfLifeFromClaude(items, purchaseDate) {
 Food items: ${itemsList.join(', ')}
 Purchase date: ${purchaseDate}
 
+IMPORTANT PARSING INSTRUCTIONS:
+- Users can type anything (e.g., "1 percent costco brand milk", "pulled chicken", "dark meat chicken thighs")
+- Always identify the PRIMARY FOOD ITEM as the main "name" (e.g., "Milk", "Chicken", "Bread")
+- Extract any MODIFIERS separately (e.g., "1% Fat, Costco Brand", "Pulled", "Dark Meat, Thighs")
+- Format the name as the core food item in title case
+- Put descriptive details, preparation methods, brands, or specifications in the modifier field
+
+Examples of proper parsing:
+- User input: "1 percent costco brand milk" → Name: "Milk", Modifier: "1% Fat, Costco Brand"
+- User input: "pulled chicken" → Name: "Chicken", Modifier: "Pulled"
+- User input: "dark meat chicken thighs" → Name: "Chicken", Modifier: "Dark Meat, Thighs"
+- User input: "leftover pizza" → Name: "Pizza", Modifier: "Leftover"
+- User input: "organic bananas" → Name: "Bananas", Modifier: "Organic"
+- User input: "frozen ground beef" → Name: "Ground Beef", Modifier: "Frozen"
+
 IMPORTANT: Provide realistic "days from purchase until food goes bad" for typical home storage. This is what consumers need to know - how many days they have from when they bought it until they should use it or throw it away.
 
-SPECIAL ATTENTION TO LEFTOVERS: When items are identified as leftovers (leftover pizza, leftover beef stew, leftover turkey dinner, etc.), provide shorter shelf life appropriate for cooked food storage. Leftovers should typically last 3-4 days in the refrigerator.
+SPECIAL ATTENTION TO LEFTOVERS: When items are identified as leftovers, provide shorter shelf life appropriate for cooked food storage. Leftovers should typically last 3-4 days in the refrigerator.
 
 For each item, provide:
-1. Category (dairy, meat, vegetables, fruits, bakery, frozen, pantry, beverages, leftovers, other)
-2. Realistic shelf life in DAYS FROM PURCHASE until it goes bad (assume typical home refrigerator/pantry storage)
-3. Expiry date calculated from purchase date
-4. Brief storage tips for home use
-
-Examples of what we want:
-- Fresh milk: 5-7 days from purchase
-- Bananas: 4-5 days from purchase  
-- Ground beef: 1-2 days from purchase
-- Bread: 3-5 days from purchase
-- Canned goods: 365+ days from purchase
-- Leftover pizza: 3-4 days from purchase
-- Leftover beef stew: 3-4 days from purchase
-- Leftover turkey dinner: 3-4 days from purchase
+1. Primary food name (clean, formal name with proper capitalization)
+2. Modifiers (descriptors, preparation, brand, etc.) - can be empty string if none
+3. Category - MUST be one of these exact values: "Dairy", "Meat", "Vegetables", "Fruits", "Bakery", "Frozen", "Pantry", "Beverages", "Other"
+4. Did the user indicate this is a leftover? (true/false) - check for words like "leftover", "cooked", "prepared", etc.
+5. Realistic shelf life in DAYS FROM PURCHASE until it goes bad (assume typical home refrigerator/pantry storage)
+6. Expiry date calculated from purchase date
+7. Brief storage tips for home use
 
 Return JSON:
 {
   "items": [
     {
-      "name": "item name",
-      "category": "category", 
+      "name": "Primary Food Name (Capitalized)",
+      "modifier": "descriptors/preparation/brand if any",
+      "category": "Category (Capitalized)",
+      "isLeftover": boolean, 
       "shelfLifeDays": number,
       "expiryDate": "YYYY-MM-DD",
       "storageRecommendations": "brief home storage tips"
@@ -107,7 +117,9 @@ export async function POST(request) {
 
       return {
         name: item.name,
+        modifier: item.modifier || '',
         category: item.category,
+        isLeftover: item.isLeftover || false,
         shelfLifeDays: item.shelfLifeDays,
         purchaseDate: today,
         expiryDate: item.expiryDate,

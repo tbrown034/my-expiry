@@ -46,6 +46,7 @@ export default function TrackingPage() {
   // Form states
   const [formData, setFormData] = useState({
     name: '',
+    modifier: '',
     category: Category.OTHER,
     expiryDate: '',
     purchaseDate: new Date().toISOString().split('T')[0],
@@ -205,15 +206,56 @@ export default function TrackingPage() {
     }
   }
 
+  const handleUpdateAIWithDetails = async () => {
+    if (!pendingAIResult || !additionalDetails.trim()) return
+    
+    setIsLoadingShelfLife(true)
+    try {
+      const enhancedQuery = `${additionalDetails.trim()} ${pendingAIResult.originalInput}`
+      
+      const response = await fetch('/api/get-shelf-life', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName: enhancedQuery })
+      })
+      
+      if (!response.ok) throw new Error('Failed to get enhanced shelf life')
+      
+      const result = await response.json()
+      
+      // Properly format the name with title case
+      const formatName = (name) => {
+        return name.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ')
+      }
+      
+      // Update the pending AI result with the enhanced data and formatting
+      setPendingAIResult({
+        ...result,
+        name: formatName(result.name),
+        originalInput: pendingAIResult.originalInput, // Keep original input for reference
+        enhancedQuery: enhancedQuery, // Store the enhanced query
+        purchaseDate: new Date().toISOString().split('T')[0],
+        isEnhanced: true, // Flag to show this was enhanced
+        enhancementDetails: additionalDetails.trim() // Store what was added
+      })
+      
+      // Clear the additional details since it's now incorporated
+      setAdditionalDetails('')
+      
+    } catch (error) {
+      console.error('Error getting enhanced shelf life:', error)
+      alert('Could not get enhanced shelf life information. Please try again.')
+    } finally {
+      setIsLoadingShelfLife(false)
+    }
+  }
+  
   const handleAcceptAI = () => {
     if (pendingAIResult) {
-      const finalName = additionalDetails.trim() 
-        ? `${additionalDetails.trim()} ${pendingAIResult.name.toLowerCase()}`
-        : pendingAIResult.name
-      
       const finalResult = {
         ...pendingAIResult,
-        name: finalName.charAt(0).toUpperCase() + finalName.slice(1),
         isLeftover: aiConfirmLeftover
       }
       
@@ -235,6 +277,7 @@ export default function TrackingPage() {
     setFormData({
       ...formData,
       name: pendingAIResult?.originalInput || '',
+      modifier: '',
       category: Category.OTHER,
       isLeftover: false
     })
@@ -245,6 +288,7 @@ export default function TrackingPage() {
     // Populate form with AI data for editing
     setFormData({
       name: pendingAIResult?.name || '',
+      modifier: pendingAIResult?.modifier || '',
       category: pendingAIResult?.category || Category.OTHER,
       expiryDate: pendingAIResult?.expiryDate || '',
       purchaseDate: pendingAIResult?.purchaseDate || new Date().toISOString().split('T')[0],
@@ -498,6 +542,7 @@ export default function TrackingPage() {
     setEditingItem(item)
     setFormData({
       name: item.name,
+      modifier: item.modifier || '',
       category: item.category || Category.OTHER,
       expiryDate: item.expiryDate,
       purchaseDate: item.purchaseDate || item.addedDate?.split('T')[0] || new Date().toISOString().split('T')[0],
@@ -900,12 +945,19 @@ export default function TrackingPage() {
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                                  <h4 className={`text-xl sm:text-2xl font-extrabold ${
-                                    item.status === 'expired' ? 'text-red-600' :
-                                    item.status === 'expires-today' ? 'text-orange-600' :
-                                    item.status === 'expiring-soon' ? 'text-amber-600' :
-                                    'text-emerald-700'
-                                  }`}>{item.name}</h4>
+                                  <div>
+                                    <h4 className={`text-xl sm:text-2xl font-extrabold ${
+                                      item.status === 'expired' ? 'text-red-600' :
+                                      item.status === 'expires-today' ? 'text-orange-600' :
+                                      item.status === 'expiring-soon' ? 'text-amber-600' :
+                                      'text-emerald-700'
+                                    }`}>{item.name}</h4>
+                                    {item.modifier && (
+                                      <p className="text-sm text-gray-600 mt-1 font-medium">
+                                        {item.modifier}
+                                      </p>
+                                    )}
+                                  </div>
                                   <button
                                     onClick={() => handleEditItem(item)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 hover:text-gray-900 transition-all duration-200"
@@ -1154,7 +1206,12 @@ export default function TrackingPage() {
                           {/* Item header - responsive */}
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h4 className="font-bold text-gray-900">{item.name}</h4>
+                              <div>
+                                <h4 className="font-bold text-gray-900">{item.name}</h4>
+                                {item.modifier && (
+                                  <p className="text-sm text-gray-600 mt-0.5 font-medium">{item.modifier}</p>
+                                )}
+                              </div>
                               <span className="px-2 py-1 text-xs rounded-full font-medium bg-gray-200 text-gray-700">
                                 {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                               </span>
@@ -1373,68 +1430,145 @@ export default function TrackingPage() {
         {showConfirmModal && pendingAIResult && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold mb-4">Confirm AI Suggestion</h2>
+              <h2 className="text-xl font-bold mb-4">Confirm Our Suggestion</h2>
               
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  You entered: <span className="font-medium">&ldquo;{pendingAIResult.originalInput}&rdquo;</span>
-                </p>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-600">
-                    AI interpreted this as:
-                  </p>
-                  {pendingAIResult.shelfLifeDays && (
-                    <button 
-                      onClick={() => {
-                        setInfoItem(pendingAIResult)
-                        setShowInfoModal(true)
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 hover:text-emerald-800 transition-all duration-200"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="bg-gray-50 p-4 rounded-xl mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
-                      Why {pendingAIResult.shelfLifeDays} days?
-                    </button>
-                  )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">Your input:</span>
+                        </p>
+                        <p className="text-base font-medium text-gray-900 bg-gray-50 px-4 py-2 rounded-lg">
+                          &ldquo;{pendingAIResult.originalInput}&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-center mb-6">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {pendingAIResult.isEnhanced && (
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    )}
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {pendingAIResult.isEnhanced ? 'Enhanced Suggestion' : 'Our Suggestion'}
+                    </h3>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="bg-white border-2 border-gray-200 p-5 rounded-xl mb-6 shadow-sm">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Name:</span>
-                    <p className="text-gray-900 font-semibold">{pendingAIResult.name.charAt(0).toUpperCase() + pendingAIResult.name.slice(1)}</p>
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-gray-600">Item Name</span>
+                    <div>
+                      <div>
+                        <p className="text-gray-900 font-semibold text-lg">{pendingAIResult.name}</p>
+                        {pendingAIResult.modifier && (
+                          <p className="text-sm text-gray-600 mt-0.5 font-medium">
+                            {pendingAIResult.modifier}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Category:</span>
-                    <p className="text-gray-900 capitalize">{pendingAIResult.category}</p>
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-gray-600">Category</span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-800">
+                        {pendingAIResult.category.charAt(0).toUpperCase() + pendingAIResult.category.slice(1)}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Estimated Shelf Life:</span>
-                    <p className="text-gray-900">{pendingAIResult.shelfLifeDays} days</p>
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-gray-600">Estimated Shelf Life</span>
+                    <div>
+                      <p className="text-gray-900 font-semibold flex items-center gap-2 mb-2">
+                        <span className="text-xl font-semibold text-emerald-600">{pendingAIResult.shelfLifeDays}</span>
+                        <span className="text-gray-600 text-sm">days</span>
+                      </p>
+                      {pendingAIResult.shelfLifeDays && (
+                        <button 
+                          onClick={() => {
+                            setInfoItem(pendingAIResult)
+                            setShowInfoModal(true)
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all hover:shadow-sm"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Why {pendingAIResult.shelfLifeDays} days?
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Expires:</span>
-                    <p className="text-gray-900">{new Date(pendingAIResult.expiryDate).toLocaleDateString()}</p>
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-gray-600">Expires On</span>
+                    <p className="text-gray-900 font-semibold">
+                      {new Date(pendingAIResult.expiryDate).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-6 mb-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Add more details (optional)
                   </label>
-                  <input
-                    type="text"
-                    value={additionalDetails}
-                    onChange={(e) => setAdditionalDetails(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="e.g., frozen, pulled, pot pie, organic..."
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={additionalDetails}
+                      onChange={(e) => setAdditionalDetails(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="e.g., frozen, pulled, pot pie, organic..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && additionalDetails.trim()) {
+                          handleUpdateAIWithDetails()
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={handleUpdateAIWithDetails}
+                      disabled={!additionalDetails.trim() || isLoadingShelfLife}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isLoadingShelfLife ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Update
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Add descriptors like &ldquo;frozen chicken&rdquo;, &ldquo;pulled chicken&rdquo;, or &ldquo;chicken pot pie&rdquo;
+                    Add descriptors like &ldquo;frozen&rdquo;, &ldquo;organic&rdquo;, or &ldquo;idaho&rdquo; and click Update for a more specific suggestion
                   </p>
                 </div>
                 
@@ -1498,7 +1632,12 @@ export default function TrackingPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="text-lg font-bold text-gray-900">{item.name.charAt(0).toUpperCase() + item.name.slice(1)}</h4>
+                          <div>
+                            <h4 className="text-lg font-bold text-gray-900">{item.name}</h4>
+                            {item.modifier && (
+                              <p className="text-sm text-gray-600 mt-0.5 font-medium">{item.modifier}</p>
+                            )}
+                          </div>
                           <span className="px-2 py-1 text-xs rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                           </span>
@@ -1853,6 +1992,22 @@ export default function TrackingPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Modifier (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.modifier}
+                    onChange={(e) => setFormData({...formData, modifier: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="e.g., Organic, Frozen, Brand Name"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Add descriptors like preparation method, brand, or quality details
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category
                   </label>
                   <select
@@ -1947,49 +2102,95 @@ export default function TrackingPage() {
         {/* Item Info Modal */}
         {showInfoModal && infoItem && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold mb-4">Item Information</h2>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Quick Freshness Check</h2>
+                <button
+                  onClick={() => {
+                    setShowInfoModal(false)
+                    setInfoItem(null)
+                  }}
+                  className="p-2 -mr-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+                  aria-label="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{infoItem.name}</h3>
-                  {infoItem.category && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">Category:</span> {infoItem.category}
-                    </p>
-                  )}
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{infoItem.name}</h3>
+                      {infoItem.modifier && (
+                        <p className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">Details:</span> {infoItem.modifier}
+                        </p>
+                      )}
+                      {infoItem.category && (
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Category:</span> {infoItem.category}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {infoItem.shelfLifeDays && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">AI Shelf Life Information</h4>
-                    <p className="text-sm text-blue-800 mb-2">
-                      Our AI estimates this item typically lasts <strong>{infoItem.shelfLifeDays} days</strong> under proper storage conditions.
-                    </p>
-                    <p className="text-xs text-blue-700">
-                      This is an average estimate. Actual shelf life may vary based on storage conditions, 
-                      quality at purchase, and specific brand variations.
-                    </p>
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-blue-900 mb-2">Freshness Information</h4>
+                        <p className="text-sm text-blue-800 mb-2">
+                          Our AI estimates this item typically lasts <strong>{infoItem.shelfLifeDays} days</strong> under proper storage conditions.
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          This is an average estimate. Actual shelf life may vary based on storage conditions, 
+                          quality at purchase, and specific brand variations.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Storage Tips</h4>
-                  <p className="text-sm text-gray-700">
-                    For optimal freshness, store in appropriate conditions and check regularly for signs of spoilage.
-                    Trust your senses - if something looks, smells, or tastes off, it&apos;s best to discard it.
-                  </p>
+                <div className="bg-white border-2 border-gray-200 p-4 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Storage Tips</h4>
+                      <p className="text-sm text-gray-700">
+                        For optimal freshness, store in appropriate conditions and check regularly for signs of spoilage.
+                        Trust your senses - if something looks, smells, or tastes off, it&apos;s best to discard it.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-center pt-2">
                   <button
                     onClick={() => {
                       setShowInfoModal(false)
                       setInfoItem(null)
                     }}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
                   >
-                    Close
+                    Got it, thanks!
                   </button>
                 </div>
               </div>
