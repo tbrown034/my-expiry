@@ -23,7 +23,7 @@ async function getShelfLifeFromClaude(items, purchaseDate) {
   const itemsList = Array.isArray(items) ? items : [items];
   
   const message = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20241022",
+    model: "claude-3-5-sonnet-20240620",
     max_tokens: 2000,
     messages: [
       {
