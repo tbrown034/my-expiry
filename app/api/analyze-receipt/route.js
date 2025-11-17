@@ -86,7 +86,7 @@ export async function POST(request) {
           console.log("🤖 AI TRIP: Starting PDF analysis with Claude API");
 
           const message = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20240620",
+            model: "claude-sonnet-4-5-20250929",
             max_tokens: 4000,
             messages: [
               {
@@ -153,7 +153,7 @@ ${pdfText}`,
         console.log("🤖 AI TRIP: Starting image analysis with Claude API");
 
         const message = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20240620",
+          model: "claude-sonnet-4-5-20250929",
           max_tokens: 2000,
           messages: [
             {
@@ -210,7 +210,7 @@ Return JSON:
         console.log("🤖 AI TRIP: Starting CSV analysis with Claude API");
 
         const message = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20240620",
+          model: "claude-sonnet-4-5-20250929",
           max_tokens: 2000,
           messages: [
             {
@@ -269,7 +269,7 @@ ${csvText}`,
         console.log("🤖 AI TRIP: Starting text analysis with Claude API");
 
         const message = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20240620",
+          model: "claude-sonnet-4-5-20250929",
           max_tokens: 2000,
           messages: [
             {
