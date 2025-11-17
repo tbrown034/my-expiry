@@ -2,7 +2,36 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+The AI features require an Anthropic API key. Create a `.env.local` file in the root directory:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` and add your Anthropic API key:
+
+```env
+ANTHROPIC_API_KEY=your_actual_api_key_here
+```
+
+To get an API key:
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign up or log in
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy and paste it into your `.env.local` file
+
+**Note**: Without this API key, AI features (shelf life detection, receipt scanning, freshness analysis) will not work.
+
+### 3. Run the Development Server
 
 ```bash
 npm run dev
