@@ -34,23 +34,23 @@ export default function About() {
       ), 
       color: "from-cyan-400 to-teal-600" 
     },
-    { 
-      name: "Prisma", 
-      icon: (
-        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-        </svg>
-      ), 
-      color: "from-indigo-400 to-purple-600" 
-    },
-    { 
-      name: "OpenAI", 
+    {
+      name: "Claude AI",
       icon: (
         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
-      ), 
-      color: "from-green-400 to-emerald-600" 
+      ),
+      color: "from-orange-400 to-amber-600"
+    },
+    {
+      name: "Vercel",
+      icon: (
+        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M24 22.525H0l12-21.05 12 21.05z" />
+        </svg>
+      ),
+      color: "from-gray-700 to-black"
     }
   ];
 
@@ -142,31 +142,6 @@ export default function About() {
         </div>
       </div>
 
-      {/* Coming Soon CTA Section */}
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-3xl p-12 border border-gray-300 opacity-75">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <h2 className="text-4xl font-bold mb-6 text-gray-700">
-            User Accounts Coming Soon
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Enhanced features including cloud sync, personalized recommendations, and advanced analytics are currently in development.
-          </p>
-          <div className="inline-flex items-center gap-3 px-8 py-4 bg-gray-300 text-gray-600 font-bold rounded-2xl cursor-not-allowed">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            Coming Soon
-          </div>
-        </div>
-      </div>
-
       {/* Tech Stack */}
       <div className="bg-white/50 backdrop-blur-sm border-t border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-16">
@@ -237,7 +212,7 @@ export default function About() {
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
                   <div className="text-lg font-bold text-emerald-300 mb-1">Full-Stack</div>
-                  <div className="text-sm text-gray-300">Next.js, Postgres, Vercel</div>
+                  <div className="text-sm text-gray-300">Next.js, AI, Vercel</div>
                 </div>
               </div>
 

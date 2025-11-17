@@ -4,21 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
-    "@auth/prisma-adapter": "^2.10.0",
-    "@neondatabase/serverless": "^1.0.1",
-    "@prisma/client": "^6.12.0",
-    "@types/pg": "^8.15.4",
     "next": "15.4.1",
-    "next-auth": "^5.0.0-beta.29",
     "pdf-parse": "^1.1.1",
-    "pg": "^8.16.3",
-    "prisma": "^6.12.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

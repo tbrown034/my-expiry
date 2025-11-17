@@ -294,13 +294,6 @@ export default function MainClient() {
     window.location.href = '/tracking';
   };
 
-  const handleSignIn = () => {
-    showToast('Sign in functionality coming soon!', 'info');
-  };
-
-  const handleSignUp = () => {
-    showToast('Sign up functionality coming soon!', 'info');
-  };
 
   const showFunAlert = (type = 'construction') => {
     setFunAlert({ isOpen: true, type });
@@ -326,10 +319,8 @@ export default function MainClient() {
   if (showLanding) {
     return (
       <>
-        <LandingPage 
+        <LandingPage
           onStartTracking={handleStartTracking}
-          onSignIn={handleSignIn}
-          onSignUp={handleSignUp}
         />
         <Toast
           message={toast.message}
