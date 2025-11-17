@@ -71,9 +71,9 @@ export default function HeaderClient() {
             <div className="hidden lg:flex items-center gap-6">
               <nav className="flex items-center gap-2">
                 {navLinks.map((link) => (
-                  <Link 
+                  <Link
                     key={link.href}
-                    href={link.href} 
+                    href={link.href}
                     className={`relative px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl flex items-center gap-2 ${
                       isActive(link.href)
                         ? 'bg-emerald-50 text-emerald-700 shadow-sm'
@@ -85,18 +85,6 @@ export default function HeaderClient() {
                   </Link>
                 ))}
               </nav>
-              
-              {/* Coming Soon Button */}
-              <button
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-xl cursor-not-allowed opacity-75 font-semibold text-sm"
-                disabled
-                title="User accounts coming soon!"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Coming Soon
-              </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -210,17 +198,6 @@ export default function HeaderClient() {
               </div>
             </div>
             
-            {/* Coming Soon Section */}
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <div className="px-4 py-3 rounded-xl bg-gray-50 text-gray-500">
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span className="font-medium">User Accounts - Coming Soon!</span>
-                </div>
-              </div>
-            </div>
           </nav>
         </div>
       </div>

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ButtonSpinner } from "./LoadingSpinner";
-import AuthButtonClient from "./AuthButtonClient";
-export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
+
+export default function LandingPage({ onStartTracking }) {
   const [quickItem, setQuickItem] = useState("");
   const [quickAnswer, setQuickAnswer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -138,18 +138,6 @@ export default function LandingPage({ onStartTracking, onSignIn, onSignUp }) {
                   />
                 </svg>
               </button>
-              
-              <div className="inline-flex items-center gap-3 px-10 py-5 bg-gray-50 border-2 border-gray-200 rounded-2xl cursor-not-allowed opacity-60 font-bold text-lg">
-                <svg 
-                  className="w-6 h-6 text-gray-400" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="text-gray-500">User Accounts - Coming Soon!</span>
-              </div>
             </div>
 
 
