@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import FridgeDoor from './components/FridgeDoor';
 import FoodInventory from './components/FoodInventory';
 import AddGroceryForm from './components/AddGroceryForm';
 import BatchAddGroceryForm from './components/BatchAddGroceryForm';
@@ -36,7 +37,7 @@ export default function MainClient() {
   const [editingGrocery, setEditingGrocery] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailGrocery, setDetailGrocery] = useState(null);
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'info', isVisible: false });
   const [funAlert, setFunAlert] = useState({ isOpen: false, type: 'construction' });
   const [easterEggClicks, setEasterEggClicks] = useState(0);
@@ -316,6 +317,56 @@ export default function MainClient() {
     });
   };
 
+  const handleMarkAsEaten = useCallback((id) => {
+    try {
+      const updated = storage.markAsEaten(id);
+      if (updated) {
+        setGroceries(prev =>
+          prev.map(g => g.id === id ? { ...g, eaten: true, eatenAt: updated.eatenAt } : g)
+        );
+        showToast('Marked as eaten! 🎉', 'success');
+      }
+    } catch (error) {
+      console.error('Error marking as eaten:', error);
+      showToast('Failed to mark item as eaten', 'error');
+    }
+  }, [showToast]);
+
+  const handleMarkAsExpired = useCallback((id) => {
+    try {
+      const updated = storage.markAsExpired(id);
+      if (updated) {
+        setGroceries(prev =>
+          prev.map(g => g.id === id ? { ...g, markedExpired: true } : g)
+        );
+        showToast('Marked as expired', 'warning');
+      }
+    } catch (error) {
+      console.error('Error marking as expired:', error);
+      showToast('Failed to mark item as expired', 'error');
+    }
+  }, [showToast]);
+
+  const handleDeleteNote = useCallback((purchaseDate) => {
+    try {
+      storage.deleteByPurchaseDate(purchaseDate);
+      setGroceries(prev => prev.filter(g => g.purchaseDate !== purchaseDate));
+      showToast('Shopping trip deleted', 'success');
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      showToast('Failed to delete shopping trip', 'error');
+    }
+  }, [showToast]);
+
+  const handleItemClick = useCallback((item) => {
+    setDetailGrocery(item);
+    setShowDetailModal(true);
+  }, []);
+
+  const handleAddShoppingTrip = () => {
+    setShowAddForm(true);
+  };
+
   if (showLanding) {
     return (
       <>
@@ -333,117 +384,9 @@ export default function MainClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/30 relative">
-      {/* Back to Landing Button - Integrated into header */}
-      
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        {/* Header Section */}
-        <div className="bg-white/95 backdrop-blur-sm border border-emerald-100 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div 
-                  onClick={handleLogoClick}
-                  className={`relative w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-400 via-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-110 hover:rotate-3 ${
-                    showEasterEgg ? 'animate-bounce' : ''
-                  }`}
-                >
-                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-green-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-opacity"></div>
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                    My Expiry
-                  </h1>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">
-                    Track • Save • Thrive
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowLanding(true)}
-                className="group flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border border-emerald-200 rounded-xl font-semibold text-emerald-700 transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span className="hidden sm:inline">Back to Home</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="relative bg-white/95 backdrop-blur-sm border border-emerald-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
-          >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-            <div className="flex items-start gap-4">
-              <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-300 to-emerald-400 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-emerald-700 transition-colors">Add Single Item</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">AI-powered shelf life detection with smart recommendations</p>
-                <div className="flex items-center gap-2 mt-3 text-xs text-emerald-600 font-medium">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                  Most Popular
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setShowBatchForm(true)}
-            className="relative bg-white/95 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-6 text-left group overflow-hidden transform hover:scale-[1.02]"
-          >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-sky-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-            <div className="flex items-start gap-4">
-              <div className="relative w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">Batch Add Items</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">Add multiple items at once with bulk processing</p>
-                <div className="flex items-center gap-2 mt-3 text-xs text-blue-600 font-medium">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                  Time Saver
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <div className="relative bg-gray-50 border border-gray-200 rounded-2xl shadow-md p-6 text-left overflow-hidden opacity-60">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400"></div>
-            <div className="flex items-start gap-4">
-              <div className="relative w-14 h-14 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-700 text-lg mb-2">Take a Photo</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">Take a photo of your receipt for AI recognition</p>
-                <div className="flex items-center gap-2 mt-3 text-xs text-gray-500 font-medium">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                  Coming Soon
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {showAddForm && (
+    <>
+      {/* Modals */}
+      {showAddForm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Add New Grocery</h2>
@@ -543,30 +486,27 @@ export default function MainClient() {
         )}
 
 
-        <FoodInventory 
-          groceries={groceries}
-          onDelete={handleDeleteGrocery}
-          onEdit={handleEditGrocery}
-          onShowDetail={handleShowDetail}
-          onGetFreshnessInfo={handleGetFreshnessInfo}
-          isAnalyzing={isAnalyzing}
-          onClearAll={handleClearAll}
-          showFunAlert={showFunAlert}
-        />
+      <FridgeDoor
+        groceries={groceries}
+        onItemClick={handleItemClick}
+        onMarkAsEaten={handleMarkAsEaten}
+        onMarkAsExpired={handleMarkAsExpired}
+        onDeleteNote={handleDeleteNote}
+        onAddShoppingTrip={handleAddShoppingTrip}
+      />
 
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={hideToast}
-        />
-        
-        <FunAlert 
-          isOpen={funAlert.isOpen} 
-          onClose={closeFunAlert} 
-          type={funAlert.type} 
-        />
-      </div>
-    </div>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+
+      <FunAlert
+        isOpen={funAlert.isOpen}
+        onClose={closeFunAlert}
+        type={funAlert.type}
+      />
+    </>
   );
 }
