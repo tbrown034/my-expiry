@@ -19,75 +19,142 @@ function getExpiryStatus(expiryDate) {
   }
 }
 
+// ==================== STRUCTURED OUTPUT SCHEMA ====================
+
+const SHELF_LIFE_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Primary food name (capitalized)"
+          },
+          modifier: {
+            type: "string",
+            description: "Descriptors, preparation, brand, etc."
+          },
+          isPerishable: {
+            type: "boolean",
+            description: "true if needs refrigeration or has short shelf life"
+          },
+          foodType: {
+            type: "string",
+            enum: ["store-bought", "premade", "leftover"],
+            description: "store-bought: packaged items. premade: deli/prepared ready-to-eat. leftover: user-cooked or opened"
+          },
+          category: {
+            type: "string",
+            enum: ["Dairy", "Meat", "Vegetables", "Fruits", "Bakery", "Frozen", "Pantry", "Beverages", "Other"],
+            description: "Food category"
+          },
+          shelfLifeDays: {
+            type: "number",
+            description: "Days from purchase until food goes bad"
+          },
+          expiryDate: {
+            type: "string",
+            description: "Expiry date in YYYY-MM-DD format"
+          },
+          storageRecommendations: {
+            type: "string",
+            description: "Brief home storage tips"
+          }
+        },
+        required: ["name", "modifier", "isPerishable", "foodType", "category", "shelfLifeDays", "expiryDate", "storageRecommendations"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["items"],
+  additionalProperties: false
+};
+
+// ==================== CACHED SYSTEM PROMPT ====================
+
+const SHELF_LIFE_SYSTEM_PROMPT = `You are a practical food safety expert helping consumers track perishable groceries.
+
+## PARSING RULES:
+Users type informal descriptions. Extract:
+- PRIMARY FOOD NAME: Core item (capitalized, e.g., "Milk", "Chicken")
+- MODIFIER: Descriptors, brands, preparation (e.g., "1% Fat, Costco Brand", "Pulled", "Leftover")
+
+Examples:
+- "1 percent costco brand milk" → Name: "Milk", Modifier: "1% Fat, Costco Brand"
+- "leftover pizza" → Name: "Pizza", Modifier: "Leftover", foodType: "leftover"
+- "deli sandwich" → Name: "Sandwich", Modifier: "Deli", foodType: "premade"
+- "fresh strawberries" → Name: "Strawberries", Modifier: "Fresh", foodType: "store-bought"
+
+## CLASSIFICATION:
+
+### isPerishable:
+- true: Fresh produce, dairy, meat, deli items, bakery, prepared foods
+- false: Canned goods, dry pantry items, unopened shelf-stable
+
+### foodType:
+- "store-bought": Packaged groceries (milk, cheese, packaged meat)
+- "premade": Deli/prepared ready-to-eat (deli sandwiches, rotisserie chicken, store salads)
+- "leftover": User-cooked or user-opened items (keywords: "leftover", "cooked", "opened")
+
+## SHELF LIFE:
+- Leftovers: 3-4 days maximum
+- Premade deli: 3-4 days maximum
+- Store-bought: Standard shelf life (milk 5-7 days, meat 1-3 days, produce varies)
+
+Be conservative with perishables - better to warn early than risk food poisoning.`;
+
+// ==================== AI FUNCTION ====================
+
 async function getShelfLifeFromClaude(items, purchaseDate) {
   const itemsList = Array.isArray(items) ? items : [items];
-  
+
   const message = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20241022",
+    model: "claude-sonnet-4-5-20250929",
     max_tokens: 2000,
+
+    // Prompt caching for repeated calls
+    system: [
+      {
+        type: "text",
+        text: SHELF_LIFE_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" }
+      }
+    ],
+
+    // Structured outputs for guaranteed valid JSON
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "shelf_life_analysis",
+        strict: true,
+        schema: SHELF_LIFE_SCHEMA
+      }
+    },
+
     messages: [
       {
         role: "user",
-        content: `You are a practical food safety expert helping consumers understand how long their groceries will last at home.
+        content: `Analyze these grocery items and provide shelf life information.
 
-Food items: ${itemsList.join(', ')}
+Items: ${itemsList.join(', ')}
 Purchase date: ${purchaseDate}
 
-IMPORTANT PARSING INSTRUCTIONS:
-- Users can type anything (e.g., "1 percent costco brand milk", "pulled chicken", "dark meat chicken thighs")
-- Always identify the PRIMARY FOOD ITEM as the main "name" (e.g., "Milk", "Chicken", "Bread")
-- Extract any MODIFIERS separately (e.g., "1% Fat, Costco Brand", "Pulled", "Dark Meat, Thighs")
-- Format the name as the core food item in title case
-- Put descriptive details, preparation methods, brands, or specifications in the modifier field
-
-Examples of proper parsing:
-- User input: "1 percent costco brand milk" → Name: "Milk", Modifier: "1% Fat, Costco Brand"
-- User input: "pulled chicken" → Name: "Chicken", Modifier: "Pulled"
-- User input: "dark meat chicken thighs" → Name: "Chicken", Modifier: "Dark Meat, Thighs"
-- User input: "leftover pizza" → Name: "Pizza", Modifier: "Leftover"
-- User input: "organic bananas" → Name: "Bananas", Modifier: "Organic"
-- User input: "frozen ground beef" → Name: "Ground Beef", Modifier: "Frozen"
-
-IMPORTANT: Provide realistic "days from purchase until food goes bad" for typical home storage. This is what consumers need to know - how many days they have from when they bought it until they should use it or throw it away.
-
-SPECIAL ATTENTION TO LEFTOVERS: When items are identified as leftovers, provide shorter shelf life appropriate for cooked food storage. Leftovers should typically last 3-4 days in the refrigerator.
-
-For each item, provide:
-1. Primary food name (clean, formal name with proper capitalization)
-2. Modifiers (descriptors, preparation, brand, etc.) - can be empty string if none
-3. Category - MUST be one of these exact values: "Dairy", "Meat", "Vegetables", "Fruits", "Bakery", "Frozen", "Pantry", "Beverages", "Other"
-4. Did the user indicate this is a leftover? (true/false) - check for words like "leftover", "cooked", "prepared", etc.
-5. Realistic shelf life in DAYS FROM PURCHASE until it goes bad (assume typical home refrigerator/pantry storage)
-6. Expiry date calculated from purchase date
-7. Brief storage tips for home use
-
-Return JSON:
-{
-  "items": [
-    {
-      "name": "Primary Food Name (Capitalized)",
-      "modifier": "descriptors/preparation/brand if any",
-      "category": "Category (Capitalized)",
-      "isLeftover": boolean, 
-      "shelfLifeDays": number,
-      "expiryDate": "YYYY-MM-DD",
-      "storageRecommendations": "brief home storage tips"
-    }
-  ]
-}
-
-Base on FDA/USDA guidelines but focus on practical consumer timeframes for home use.`
+Focus on PERISHABLE items only. Determine if each item is store-bought, premade/deli, or leftover.`
       }
     ]
   });
 
-  const content = message.content[0].text;
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Invalid AI response format");
+  const responseText = message.content.find(block => block.type === 'text')?.text;
+  if (!responseText) {
+    throw new Error("No text content in AI response");
   }
 
-  return JSON.parse(jsonMatch[0]);
+  console.log(`📊 Cache usage: ${message.usage?.cache_read_input_tokens || 0} cached tokens`);
+
+  return JSON.parse(responseText);
 }
 
 export async function POST(request) {
@@ -106,11 +173,17 @@ export async function POST(request) {
     const today = new Date().toISOString().split('T')[0];
     const cleanItems = items.map(item => item.trim());
 
-    console.log(`Getting shelf life for ${cleanItems.length} items using Claude AI...`);
-    
+    console.log(`🚀 Getting shelf life for ${cleanItems.length} items with optimized AI...`);
+
     const claudeResponse = await getShelfLifeFromClaude(cleanItems, today);
-    
+
     const processedItems = claudeResponse.items.map(item => {
+      // Apply shelf life caps for premade/leftover items
+      let shelfLifeDays = item.shelfLifeDays;
+      if (item.foodType === 'premade' || item.foodType === 'leftover') {
+        shelfLifeDays = Math.min(shelfLifeDays, 4);
+      }
+
       const daysUntilExpiry = Math.ceil(
         (new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
       );
@@ -118,9 +191,12 @@ export async function POST(request) {
       return {
         name: item.name,
         modifier: item.modifier || '',
+        isPerishable: item.isPerishable,
+        foodType: item.foodType,
         category: item.category,
-        isLeftover: item.isLeftover || false,
-        shelfLifeDays: item.shelfLifeDays,
+        // Backwards compatibility
+        isLeftover: item.foodType === 'leftover',
+        shelfLifeDays,
         purchaseDate: today,
         expiryDate: item.expiryDate,
         daysUntilExpiry,
@@ -130,6 +206,8 @@ export async function POST(request) {
       };
     });
 
+    console.log(`✅ Processed ${processedItems.length} items successfully`);
+
     if (isBatch) {
       return NextResponse.json({ items: processedItems });
     } else {
@@ -137,7 +215,7 @@ export async function POST(request) {
     }
 
   } catch (error) {
-    console.error('Error getting shelf life:', error);
+    console.error('❌ Error getting shelf life:', error);
     return NextResponse.json(
       { error: 'Failed to get shelf life information', details: error.message },
       { status: 500 }
