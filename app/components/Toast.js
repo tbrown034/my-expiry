@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { variants } from '../../lib/motionVariants';
 
 export default function Toast({ message, type = 'info', isVisible, onClose, duration = 3000 }) {
   useEffect(() => {
@@ -6,12 +8,10 @@ export default function Toast({ message, type = 'info', isVisible, onClose, dura
       const timer = setTimeout(() => {
         onClose();
       }, duration);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isVisible, duration, onClose]);
-
-  if (!isVisible) return null;
 
   const getToastStyles = () => {
     switch (type) {
@@ -56,24 +56,35 @@ export default function Toast({ message, type = 'info', isVisible, onClose, dura
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-      <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${getToastStyles()} min-w-64 max-w-md`}>
-        <div className="flex-shrink-0">
-          {getIcon()}
-        </div>
-        <div className="flex-1 text-sm font-medium">
-          {message}
-        </div>
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 hover:opacity-70 transition-opacity"
-          aria-label="Close notification"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+    <div className="fixed top-4 right-4 z-50">
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            variants={variants.toastSlide}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${getToastStyles()} min-w-64 max-w-md`}>
+              <div className="flex-shrink-0">
+                {getIcon()}
+              </div>
+              <div className="flex-1 text-sm font-medium">
+                {message}
+              </div>
+              <button
+                onClick={onClose}
+                className="flex-shrink-0 hover:opacity-70 transition-opacity"
+                aria-label="Close notification"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -12,13 +12,22 @@ import BatchGroceryPopup from './components/BatchGroceryPopup';
 import GroceryAnalysisPopup from './components/GroceryAnalysisPopup';
 import EditGroceryModal from './components/EditGroceryModal';
 import GroceryDetailModal from './components/GroceryDetailModal';
+import HomePage from './components/HomePage';
+import AddToFridgePage from './components/AddToFridgePage';
+import TypeItemsPage from './components/TypeItemsPage';
 import LandingPage from './components/LandingPage';
 import Toast from './components/Toast';
 import FunAlert from './components/FunAlert';
+import Modal from './components/Modal';
+import ConfirmationModal from './components/ConfirmationModal';
+import { motion, AnimatePresence } from 'motion/react';
+import { variants } from '../lib/motionVariants';
 import { storage } from '../lib/storage';
 import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
 
 export default function MainClient() {
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'add', 'fridge'
+  const [previousView, setPreviousView] = useState(null);
   const [groceries, setGroceries] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBatchForm, setShowBatchForm] = useState(false);
@@ -28,6 +37,7 @@ export default function MainClient() {
   const [showDocumentPopup, setShowDocumentPopup] = useState(false);
   const [pendingGroceryItem, setPendingGroceryItem] = useState(null);
   const [batchShelfLifeResult, setBatchShelfLifeResult] = useState(null);
+  const [pendingBatchItems, setPendingBatchItems] = useState(null); // For "add more items" flow
   const [documentAnalysisResult, setDocumentAnalysisResult] = useState(null);
   const [isLoadingShelfLife, setIsLoadingShelfLife] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -42,6 +52,7 @@ export default function MainClient() {
   const [funAlert, setFunAlert] = useState({ isOpen: false, type: 'construction' });
   const [easterEggClicks, setEasterEggClicks] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type, isVisible: true });
@@ -125,54 +136,104 @@ export default function MainClient() {
   };
 
   const handleConfirmGroceryItem = (groceryData) => {
+    const batchMetadata = {
+      source: 'manual',
+      batchId: Date.now().toString(),
+      addedAt: new Date().toISOString()
+    };
+
     const grocery = storage.addGrocery({
       ...groceryData,
+      batchMetadata,
       daysUntilExpiry: calculateDaysUntilExpiry(groceryData.expiryDate),
       status: getExpiryStatus(calculateDaysUntilExpiry(groceryData.expiryDate))
     });
     setGroceries(prev => [...prev, grocery]);
     setShowGroceryPopup(false);
     setPendingGroceryItem(null);
+    setShowAddForm(false);
+    showToast('Item added! Viewing your fridge...', 'success');
+    setCurrentView('fridge');
   };
 
   const handleBatchAddGrocery = async (itemNames) => {
     if (!itemNames || itemNames.length === 0) return;
-    
+
     setIsLoadingShelfLife(true);
     try {
-      const response = await fetch('/api/get-shelf-life', {
+      // Stage 1: Parse items (interpret user input)
+      const response = await fetch('/api/parse-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemNames: itemNames })
+        body: JSON.stringify({ items: itemNames })
       });
 
-      if (!response.ok) throw new Error('Failed to get shelf life');
-      
-      const batchResult = await response.json();
-      setBatchShelfLifeResult(batchResult);
+      if (!response.ok) throw new Error('Failed to parse items');
+
+      const parseResult = await response.json();
+
+      // If we have pending items from "Add More" flow, merge them
+      if (pendingBatchItems && pendingBatchItems.length > 0) {
+        const mergedItems = [
+          ...pendingBatchItems,
+          ...parseResult.items.map((item, index) => ({
+            ...item,
+            id: pendingBatchItems.length + index // Ensure unique IDs
+          }))
+        ];
+        setBatchShelfLifeResult({ ...parseResult, items: mergedItems });
+        setPendingBatchItems(null); // Clear pending items
+      } else {
+        setBatchShelfLifeResult(parseResult); // Contains parsed items without shelf life
+      }
+
       setShowBatchPopup(true);
       setShowBatchForm(false);
     } catch (error) {
-      console.error('Error getting batch shelf life:', error);
-      showToast('Could not get shelf life information for some items. Please try again.', 'error');
+      console.error('Error parsing items:', error);
+      showToast('Could not parse items. Please try again.', 'error');
     } finally {
       setIsLoadingShelfLife(false);
     }
   };
 
+  const handleAddMoreItems = (currentItems) => {
+    // Store current items and navigate back to type page
+    setPendingBatchItems(currentItems);
+    setShowBatchPopup(false);
+    setBatchShelfLifeResult(null);
+    // User is already on 'type' view, so they'll see the TypeItemsPage again
+  };
+
+  const handleTypeItemsSubmit = async (itemNames) => {
+    // Handle submission from TypeItemsPage by calling batch add
+    await handleBatchAddGrocery(itemNames);
+  };
+
   const handleConfirmBatchItems = (itemsToAdd) => {
+    const batchId = Date.now().toString();
+    const batchMetadata = {
+      source: 'manual',
+      batchId,
+      addedAt: new Date().toISOString()
+    };
+
     const addedItems = itemsToAdd.map(item => {
       const grocery = storage.addGrocery({
         ...item,
+        batchMetadata,
         daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
         status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
       });
       return grocery;
     });
-    
+
     setGroceries(prev => [...prev, ...addedItems]);
     setShowBatchPopup(false);
     setBatchShelfLifeResult(null);
+    setShowBatchForm(false);
+    showToast(`${addedItems.length} items added! Viewing your fridge...`, 'success');
+    setCurrentView('fridge');
   };
 
   const handleReceiptAnalyzed = (analysisResult) => {
@@ -182,18 +243,30 @@ export default function MainClient() {
   };
 
   const handleConfirmDocumentItems = (itemsToAdd) => {
+    const batchId = Date.now().toString();
+    const batchMetadata = {
+      source: 'receipt',
+      storeName: documentAnalysisResult?.storeName || null,
+      batchId,
+      addedAt: new Date().toISOString()
+    };
+
     const addedItems = itemsToAdd.map(item => {
       const grocery = storage.addGrocery({
         ...item,
+        batchMetadata,
         daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
         status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
       });
       return grocery;
     });
-    
+
     setGroceries(prev => [...prev, ...addedItems]);
     setShowDocumentPopup(false);
     setDocumentAnalysisResult(null);
+    setShowDocumentUpload(false);
+    showToast(`${addedItems.length} items added from receipt! Viewing your fridge...`, 'success');
+    setCurrentView('fridge');
   };
 
   const handleGetFreshnessInfo = async () => {
@@ -225,15 +298,17 @@ export default function MainClient() {
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to delete all groceries? This action cannot be undone.')) {
-      try {
-        storage.clearAllGroceries();
-        setGroceries([]);
-        showToast('All groceries cleared successfully', 'success');
-      } catch (error) {
-        console.error('Error clearing groceries:', error);
-        showToast('Failed to clear groceries. Please try again.', 'error');
-      }
+    setShowClearAllConfirm(true);
+  };
+
+  const handleConfirmClearAll = () => {
+    try {
+      storage.clearAllGroceries();
+      setGroceries([]);
+      showToast('All groceries cleared successfully', 'success');
+    } catch (error) {
+      console.error('Error clearing groceries:', error);
+      showToast('Failed to clear groceries. Please try again.', 'error');
     }
   };
 
@@ -364,7 +439,42 @@ export default function MainClient() {
   }, []);
 
   const handleAddShoppingTrip = () => {
-    setShowAddForm(true);
+    setPreviousView(currentView);
+    setCurrentView('add');
+  };
+
+  const handleNavigate = (view) => {
+    setPreviousView(currentView);
+    setCurrentView(view);
+  };
+
+  const handleSelectAddMethod = (method) => {
+    if (method === 'single') {
+      setShowAddForm(true);
+    } else if (method === 'manual') {
+      setCurrentView('type');
+    } else if (method === 'batch') {
+      setShowBatchForm(true);
+    } else if (method === 'receipt') {
+      setShowDocumentUpload(true);
+    }
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+  };
+
+  const handleBackToAdd = () => {
+    setCurrentView('add');
+  };
+
+  const handleBackFromAdd = () => {
+    if (previousView) {
+      setCurrentView(previousView);
+      setPreviousView(null);
+    } else {
+      setCurrentView('home');
+    }
   };
 
   if (showLanding) {
@@ -383,47 +493,123 @@ export default function MainClient() {
     );
   }
 
+  // Render different views with page transitions
   return (
     <>
-      {/* Modals */}
-      {showAddForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Add New Grocery</h2>
-              <AddGroceryForm 
-                onSubmit={handleAddGrocery}
-                onSubmitWithAI={handleAddGroceryWithAI}
-                onCancel={() => setShowAddForm(false)}
-                isLoadingShelfLife={isLoadingShelfLife}
-              />
-            </div>
-          </div>
+      <AnimatePresence mode="wait">
+        {currentView === 'home' && (
+          <motion.div
+            key="home"
+            variants={variants.fridgeSlide}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <HomePage onNavigate={handleNavigate} />
+          </motion.div>
         )}
 
-        {showBatchForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
-              <BatchAddGroceryForm 
-                onBatchSubmit={handleBatchAddGrocery}
-                onCancel={() => setShowBatchForm(false)}
-                isLoadingShelfLife={isLoadingShelfLife}
-              />
-            </div>
-          </div>
+        {currentView === 'add' && (
+          <motion.div
+            key="add"
+            variants={variants.fridgeSlide}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <AddToFridgePage
+              onSelectMethod={handleSelectAddMethod}
+              onBack={handleBackFromAdd}
+            />
+          </motion.div>
         )}
 
-        {showDocumentUpload && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Take a Photo of Receipt</h2>
-              <ReceiptUpload 
-                onReceiptAnalyzed={handleReceiptAnalyzed}
-                onClose={() => setShowDocumentUpload(false)}
-                showToast={showToast}
-              />
-            </div>
-          </div>
+        {currentView === 'type' && (
+          <motion.div
+            key="type"
+            variants={variants.fridgeSlide}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <TypeItemsPage
+              onSubmit={handleTypeItemsSubmit}
+              onBack={() => setCurrentView('add')}
+              initialItems={pendingBatchItems}
+            />
+          </motion.div>
         )}
+
+        {currentView === 'fridge' && (
+          <motion.div
+            key="fridge"
+            variants={variants.fridgeSlide}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <FridgeDoor
+                groceries={groceries}
+                onItemClick={handleItemClick}
+                onMarkAsEaten={handleMarkAsEaten}
+                onMarkAsExpired={handleMarkAsExpired}
+                onDeleteNote={handleDeleteNote}
+                onEditItem={handleEditGrocery}
+                onDeleteItem={handleDeleteGrocery}
+                onAddShoppingTrip={handleAddShoppingTrip}
+                onBack={handleBackToHome}
+              />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast - always visible */}
+      <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={hideToast}
+        />
+
+        {/* Add Forms - Using Reusable Modal Component */}
+        <Modal
+          isOpen={showAddForm}
+          onClose={() => setShowAddForm(false)}
+          title="Add New Grocery"
+          size="md"
+        >
+          <AddGroceryForm
+            onSubmit={handleAddGrocery}
+            onSubmitWithAI={handleAddGroceryWithAI}
+            onCancel={() => setShowAddForm(false)}
+            isLoadingShelfLife={isLoadingShelfLife}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={showBatchForm}
+          onClose={() => setShowBatchForm(false)}
+          size="lg"
+        >
+          <BatchAddGroceryForm
+            onBatchSubmit={handleBatchAddGrocery}
+            onCancel={() => setShowBatchForm(false)}
+            isLoadingShelfLife={isLoadingShelfLife}
+          />
+        </Modal>
+
+        <Modal
+          isOpen={showDocumentUpload}
+          onClose={() => setShowDocumentUpload(false)}
+          title="Take a Photo of Receipt"
+          size="lg"
+        >
+          <ReceiptUpload
+            onReceiptAnalyzed={handleReceiptAnalyzed}
+            onClose={() => setShowDocumentUpload(false)}
+            showToast={showToast}
+          />
+        </Modal>
 
         {showGroceryPopup && pendingGroceryItem && (
           <GroceryItemPopup
@@ -443,7 +629,9 @@ export default function MainClient() {
             onCancel={() => {
               setShowBatchPopup(false);
               setBatchShelfLifeResult(null);
+              setPendingBatchItems(null);
             }}
+            onAddMoreItems={handleAddMoreItems}
           />
         )}
 
@@ -458,16 +646,7 @@ export default function MainClient() {
           />
         )}
 
-        {showAnalysisPopup && analysisResult && (
-          <GroceryAnalysisPopup
-            analysisResult={analysisResult}
-            onClose={() => {
-              setShowAnalysisPopup(false);
-              setAnalysisResult(null);
-            }}
-          />
-        )}
-
+        {/* Modals always available */}
         {showEditModal && editingGrocery && (
           <EditGroceryModal
             grocery={editingGrocery}
@@ -479,34 +658,29 @@ export default function MainClient() {
         {showDetailModal && detailGrocery && (
           <GroceryDetailModal
             grocery={detailGrocery}
+            isOpen={showDetailModal}
             onEdit={handleEditGrocery}
             onDelete={handleDeleteGrocery}
             onClose={handleCloseDetail}
           />
         )}
 
+        <FunAlert
+          isOpen={funAlert.isOpen}
+          onClose={closeFunAlert}
+          type={funAlert.type}
+        />
 
-      <FridgeDoor
-        groceries={groceries}
-        onItemClick={handleItemClick}
-        onMarkAsEaten={handleMarkAsEaten}
-        onMarkAsExpired={handleMarkAsExpired}
-        onDeleteNote={handleDeleteNote}
-        onAddShoppingTrip={handleAddShoppingTrip}
-      />
-
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
-      />
-
-      <FunAlert
-        isOpen={funAlert.isOpen}
-        onClose={closeFunAlert}
-        type={funAlert.type}
-      />
-    </>
-  );
+        <ConfirmationModal
+          isOpen={showClearAllConfirm}
+          onClose={() => setShowClearAllConfirm(false)}
+          onConfirm={handleConfirmClearAll}
+          title="Delete All Groceries?"
+          message="Are you sure you want to delete all groceries? This action cannot be undone."
+          confirmText="Delete All"
+          cancelText="Cancel"
+          variant="danger"
+        />
+      </>
+    );
 }

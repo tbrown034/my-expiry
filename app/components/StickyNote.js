@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { formatDate } from '../../lib/utils';
+import ActionMenu from './ActionMenu';
 
 const STICKY_COLORS = [
-  'bg-yellow-200 border-yellow-300',
-  'bg-pink-200 border-pink-300',
-  'bg-blue-200 border-blue-300',
-  'bg-green-200 border-green-300',
-  'bg-purple-200 border-purple-300',
+  { bg: 'bg-yellow-100', border: 'border-yellow-300', hover: 'hover:bg-yellow-50' },
+  { bg: 'bg-pink-100', border: 'border-pink-300', hover: 'hover:bg-pink-50' },
+  { bg: 'bg-blue-100', border: 'border-blue-300', hover: 'hover:bg-blue-50' },
+  { bg: 'bg-green-100', border: 'border-green-300', hover: 'hover:bg-green-50' },
+  { bg: 'bg-purple-100', border: 'border-purple-300', hover: 'hover:bg-purple-50' },
 ];
 
 const ROTATIONS = [
@@ -22,19 +23,33 @@ const ROTATIONS = [
 export default function StickyNote({
   purchaseDate,
   items,
+  metadata = {},
+  isPartial = false,
+  partNumber = 1,
+  totalParts = 1,
   onItemClick,
   onMarkAsEaten,
   onMarkAsExpired,
   onDeleteNote,
+  onEditItem,
+  onDeleteItem,
   colorIndex = 0
 }) {
-  const [isExpanded, setIsExpanded] = useState(items.length <= 5);
-
-  const stickyColor = STICKY_COLORS[colorIndex % STICKY_COLORS.length];
+  const colorScheme = STICKY_COLORS[colorIndex % STICKY_COLORS.length];
   const rotation = ROTATIONS[colorIndex % ROTATIONS.length];
 
-  const displayItems = isExpanded ? items : items.slice(0, 4);
-  const hasMore = items.length > 4;
+  // Generate batch description
+  const getBatchDescription = () => {
+    if (metadata.source === 'receipt' && metadata.storeName) {
+      return `${metadata.storeName} Receipt`;
+    } else if (metadata.source === 'receipt') {
+      return 'Receipt Scan';
+    } else {
+      return 'Manual Entry';
+    }
+  };
+
+  const batchDescription = getBatchDescription();
 
   // Count statuses
   const eatenCount = items.filter(item => item.eaten).length;
@@ -52,112 +67,196 @@ export default function StickyNote({
 
   return (
     <div
-      className={`sticky-note ${stickyColor} ${rotation} relative p-4 rounded-sm border-2 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group`}
-      onClick={() => setIsExpanded(!isExpanded)}
+      className={`
+        sticky-note ${colorScheme.bg} ${colorScheme.border} ${rotation}
+        relative p-4 sm:p-5 rounded-sm border-2
+        transition-all duration-300 interactive group
+        min-h-[220px] sm:min-h-[240px]
+      `}
+      style={{
+        boxShadow: '0 4px 8px rgba(0,0,0,0.25), 0 8px 16px rgba(0,0,0,0.15)',
+      }}
+      role="article"
+      aria-label={`Shopping trip from ${formatDate(purchaseDate)} with ${items.length} items`}
     >
-      {/* Pin/Thumbtack visual at top */}
-      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
+      {/* Metallic magnet/thumbtack visual - matches HomePage style */}
+      <div
+        className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full"
+        style={{
+          background: 'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #991b1b 100%)',
+          boxShadow: '0 3px 6px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+        }}
+        aria-hidden="true"
+      ></div>
 
-      {/* Header with purchase date */}
-      <div className="mb-3 pb-2 border-b border-gray-400/30">
-        <h3 className="text-sm font-bold text-gray-700">
-          📝 Bought {formatDate(purchaseDate)}
-        </h3>
-        {(eatenCount > 0 || expiredCount > 0) && (
-          <div className="text-xs text-gray-600 mt-1">
-            {activeCount > 0 && <span>{activeCount} active</span>}
-            {eatenCount > 0 && <span className="ml-2">✓ {eatenCount} eaten</span>}
-            {expiredCount > 0 && <span className="ml-2 text-red-600">✗ {expiredCount} expired</span>}
+      {/* Header with batch description and date */}
+      <div className="w-full mb-3 pb-3 border-b border-gray-400/30">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="text-sm sm:text-base font-bold text-gray-800 font-handwritten">
+              <span className="mr-2" role="img" aria-label="Note">📝</span>
+              {batchDescription}
+              {isPartial && <span className="text-xs ml-1">({partNumber}/{totalParts})</span>}
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">{formatDate(purchaseDate)}</p>
+          </div>
+        </div>
+        {(eatenCount > 0 || expiredCount > 0 || activeCount > 0) && (
+          <div className="text-xs sm:text-sm text-gray-700 mt-2 flex flex-wrap gap-2">
+            {activeCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                {activeCount} active
+              </span>
+            )}
+            {eatenCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                ✓ {eatenCount} eaten
+              </span>
+            )}
+            {expiredCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                ✗ {expiredCount} expired
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Items list */}
-      <ul className="space-y-2 mb-2">
-        {displayItems.map((item) => (
+      {/* Items list - improved readability */}
+      <ul className="space-y-2.5 mb-3" role="list">
+        {items.map((item) => (
           <li
             key={item.id}
-            className={`text-sm flex items-start justify-between group/item ${
-              item.eaten ? 'opacity-60' : ''
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onItemClick(item);
-            }}
+            className={`
+              group/item interactive
+              ${item.eaten ? 'opacity-70' : ''}
+            `}
           >
-            <div className="flex-1 min-w-0">
-              {/* Item name with strikethrough if eaten or expired */}
-              <span className={`${
-                item.eaten ? 'line-through text-green-700' :
-                item.status === 'expired' ? 'line-through text-red-600' :
-                'text-gray-800'
-              }`}>
-                {item.name}
-              </span>
+            <div
+              onClick={(e) => {
+                // Only trigger if clicking the item itself, not action buttons
+                if (!e.target.closest('.interactive-button')) {
+                  onItemClick(item);
+                }
+              }}
+              className={`
+                w-full text-left p-2 -mx-2 rounded-lg
+                transition-all duration-200
+                ${colorScheme.hover}
+                flex items-start justify-between gap-2
+                cursor-pointer
+              `}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onItemClick(item);
+                }
+              }}
+              aria-label={`View details for ${item.name}`}
+            >
+              <div className="flex-1 min-w-0">
+                {/* Item name with strikethrough if eaten or expired */}
+                <div className={`
+                  text-sm sm:text-base font-medium
+                  ${item.eaten ? 'line-through text-green-700' :
+                    item.status === 'expired' ? 'line-through text-red-700' :
+                    'text-gray-900'}
+                `}>
+                  {item.name}
+                </div>
 
-              {/* Expiry date */}
-              <span className={`ml-2 text-xs ${
-                item.eaten ? 'text-green-600' :
-                item.status === 'expired' ? 'text-red-500 font-bold' :
-                item.status === 'expiring_soon' ? 'text-amber-600 font-semibold' :
-                'text-gray-500'
-              }`}>
-                {item.eaten ? '✓ ate it!' :
-                 item.status === 'expired' ? 'EXPIRED' :
-                 formatDate(item.expiryDate)}
-              </span>
-            </div>
-
-            {/* Action buttons - show on hover */}
-            {!item.eaten && (
-              <div className="ml-2 flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => handleItemAction(e, item, 'eaten')}
-                  className="text-green-600 hover:text-green-800 text-xs px-1.5 py-0.5 rounded hover:bg-white/50"
-                  title="Mark as eaten"
-                >
-                  ✓
-                </button>
-                {item.status === 'expired' && (
-                  <button
-                    onClick={(e) => handleItemAction(e, item, 'expired')}
-                    className="text-red-600 hover:text-red-800 text-xs px-1.5 py-0.5 rounded hover:bg-white/50"
-                    title="Confirm expired"
-                  >
-                    ✗
-                  </button>
-                )}
+                {/* Expiry date with status indicator */}
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span className={`
+                    text-xs sm:text-sm font-medium
+                    ${item.eaten ? 'text-green-600' :
+                      item.status === 'expired' ? 'text-red-600' :
+                      item.status === 'expiring_soon' ? 'text-amber-600' :
+                      'text-gray-600'}
+                  `}>
+                    {item.eaten ? '✓ Ate it!' :
+                     item.status === 'expired' ? '⚠️ Expired' :
+                     formatDate(item.expiryDate)}
+                  </span>
+                </div>
               </div>
-            )}
+
+              {/* Action menu - cleaner mobile UX */}
+              <div className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                <ActionMenu
+                  actions={[
+                    {
+                      label: 'View Details',
+                      icon: (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ),
+                      onClick: () => onItemClick(item),
+                      color: 'text-blue-600'
+                    },
+                    ...(!item.eaten ? [
+                      {
+                        label: 'Edit Item',
+                        icon: (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        ),
+                        onClick: () => onEditItem(item.id),
+                        color: 'text-amber-600'
+                      },
+                      {
+                        label: 'Mark as Eaten',
+                        icon: (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ),
+                        onClick: () => handleItemAction({ stopPropagation: () => {} }, item, 'eaten'),
+                        color: 'text-green-600'
+                      },
+                      {
+                        label: 'Delete Item',
+                        icon: (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        ),
+                        onClick: () => {
+                          if (confirm(`Delete ${item.name}?`)) {
+                            onDeleteItem(item.id);
+                          }
+                        },
+                        color: 'text-red-600'
+                      }
+                    ] : [])
+                  ]}
+                  align="right"
+                />
+              </div>
+            </div>
           </li>
         ))}
       </ul>
 
-      {/* Show more/less toggle */}
-      {hasMore && (
-        <button
-          className="text-xs text-gray-600 hover:text-gray-800 underline"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
-        >
-          {isExpanded ? 'Show less' : `...and ${items.length - 4} more`}
-        </button>
-      )}
-
-      {/* Delete note button - shows on hover */}
+      {/* Delete note button - improved for mobile */}
       <button
         onClick={(e) => {
           e.stopPropagation();
-          if (confirm(`Delete this shopping trip (${items.length} items)?`)) {
+          if (confirm(`Delete this shopping trip with ${items.length} item${items.length !== 1 ? 's' : ''}?`)) {
             onDeleteNote(purchaseDate);
           }
         }}
-        className="absolute top-2 right-2 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity text-xs"
-        title="Delete entire note"
+        className="absolute top-3 right-3 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all interactive"
+        aria-label="Delete shopping trip"
+        title="Delete entire shopping trip"
       >
-        🗑️
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
       </button>
     </div>
   );

@@ -1,8 +1,9 @@
 'use client';
 
+import Modal from './Modal';
 import { formatGroceryName, formatCategoryName, getCategoryColorClass, getStatusColor, formatCountdown, calculateHoursUntilExpiry } from '../../lib/utils';
 
-export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose }) {
+export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose, isOpen }) {
   if (!grocery) return null;
 
   const hoursUntilExpiry = calculateHoursUntilExpiry(grocery.expiryDate);
@@ -10,11 +11,11 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose 
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-US', { 
+    return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -28,22 +29,8 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Item Details</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1"
-            aria-label="Close"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="space-y-6">
+    <Modal isOpen={isOpen} onClose={onClose} size="md" title="Item Details">
+      <div className="space-y-6">
           {/* Item Name */}
           <div className="text-center">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -123,35 +110,36 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose 
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => {
-                onEdit(grocery.id);
-                onClose();
-              }}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                onDelete(grocery.id);
-                onClose();
-              }}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4">
+          <button
+            onClick={() => {
+              onEdit(grocery.id);
+              onClose();
+            }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Edit item"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          </button>
+          <button
+            onClick={() => {
+              onDelete(grocery.id);
+              onClose();
+            }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            aria-label="Delete item"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+          </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

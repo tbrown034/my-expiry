@@ -43,41 +43,41 @@ export default function HeaderClient() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16 lg:h-18">
+          <div className="flex items-center justify-between h-14 lg:h-16">
             {/* Logo */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center gap-3 group"
             >
               <div className="relative">
-                <div className="w-10 h-10 lg:w-11 lg:h-11 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/25 transition-all duration-300 transform group-hover:scale-105">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-gentle-pulse"></div>
+                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full"></div>
               </div>
               <div className="flex flex-col">
-                <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-lg lg:text-xl font-bold text-white">
                   My Expiry
                 </h1>
-                <span className="text-xs text-gray-500 hidden sm:block">Track • Save • Thrive</span>
+                <span className="text-xs text-slate-400 hidden sm:block">Track • Save • Thrive</span>
               </div>
             </Link>
             
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-6">
-              <nav className="flex items-center gap-2">
+              <nav className="flex items-center gap-1">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`relative px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl flex items-center gap-2 ${
+                    className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-2 ${
                       isActive(link.href)
-                        ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-emerald-600'
+                        ? 'bg-slate-700 text-white'
+                        : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                     }`}
                   >
                     {link.icon}
@@ -89,32 +89,25 @@ export default function HeaderClient() {
 
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-3 lg:hidden">
-              {/* Hamburger Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className={`relative p-2.5 rounded-xl transition-all duration-300 ${
-                  isMobileMenuOpen 
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 shadow-lg' 
-                    : 'bg-gray-100 hover:bg-gray-200'
+                className={`relative p-2 rounded-lg transition-all duration-300 ${
+                  isMobileMenuOpen
+                    ? 'bg-emerald-500'
+                    : 'bg-slate-700 hover:bg-slate-600'
                 }`}
                 aria-label="Toggle mobile menu"
                 aria-expanded={isMobileMenuOpen}
               >
                 <div className="w-5 h-5 relative">
-                  <span className={`absolute block h-0.5 w-full transition-all duration-300 ${
-                    isMobileMenuOpen 
-                      ? 'bg-white rotate-45 top-2' 
-                      : 'bg-gray-700 top-0'
+                  <span className={`absolute block h-0.5 w-full bg-white transition-all duration-300 ${
+                    isMobileMenuOpen ? 'rotate-45 top-2' : 'top-0.5'
                   }`}></span>
-                  <span className={`absolute block h-0.5 w-full top-2 transition-all duration-300 ${
-                    isMobileMenuOpen 
-                      ? 'opacity-0' 
-                      : 'bg-gray-700 opacity-100'
+                  <span className={`absolute block h-0.5 w-full bg-white top-2 transition-all duration-300 ${
+                    isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
                   }`}></span>
-                  <span className={`absolute block h-0.5 w-full transition-all duration-300 ${
-                    isMobileMenuOpen 
-                      ? 'bg-white -rotate-45 top-2' 
-                      : 'bg-gray-700 top-4'
+                  <span className={`absolute block h-0.5 w-full bg-white transition-all duration-300 ${
+                    isMobileMenuOpen ? '-rotate-45 top-2' : 'top-3.5'
                   }`}></span>
                 </div>
               </button>
@@ -127,77 +120,35 @@ export default function HeaderClient() {
       <div className={`fixed inset-0 z-40 lg:hidden transition-all duration-300 ${
         isMobileMenuOpen ? 'visible' : 'invisible'
       }`}>
-        <div 
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-            isMobileMenuOpen ? 'opacity-50' : 'opacity-0'
+        <div
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+            isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={() => setIsMobileMenuOpen(false)}
         ></div>
-        
+
         {/* Mobile Menu Panel */}
-        <div className={`absolute top-16 right-0 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 transform ${
+        <div className={`absolute top-14 right-0 w-full max-w-xs bg-slate-800 border-l border-slate-700 shadow-2xl transition-transform duration-300 transform ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}>
-          <nav className="px-4 py-6 space-y-2">
-            
-            {/* Navigation Links */}
+        }`} style={{ height: 'calc(100vh - 56px)' }}>
+          <nav className="px-4 py-4">
             <div className="space-y-1">
               {navLinks.map((link) => (
-                <Link 
+                <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive(link.href)
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-emerald-500 text-white'
+                      : 'text-slate-300 hover:bg-slate-700'
                   }`}
                 >
-                  <div className={isActive(link.href) ? 'text-white' : 'text-gray-500'}>
-                    {link.icon}
-                  </div>
+                  {link.icon}
                   <span className="font-medium">{link.label}</span>
-                  {isActive(link.href) && (
-                    <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
                 </Link>
               ))}
             </div>
-            
-            {/* Quick Actions */}
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Actions</p>
-              <div className="space-y-1 mt-2">
-                <button 
-                  onClick={() => {
-                    window.location.href = '/?action=add'
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-left"
-                >
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span className="font-medium">Add Items</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    window.location.href = '/?action=scan'
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-left"
-                >
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="font-medium">Scan Receipt</span>
-                </button>
-              </div>
-            </div>
-            
           </nav>
         </div>
       </div>

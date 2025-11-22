@@ -1,8 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { ExpiryStatus } from "../../../lib/types";
-// Dynamic import to avoid build issues
-let pdf;
+import sharp from "sharp";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -10,6 +9,195 @@ const anthropic = new Anthropic({
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error("ANTHROPIC_API_KEY environment variable is not set");
+}
+
+// ==================== FILE VALIDATION & LIMITS ====================
+
+const RECEIPT_LIMITS = {
+  MAX_FILE_SIZE: 20 * 1024 * 1024,  // 20MB
+  MAX_IMAGE_DIMENSION: 4096,         // pixels
+  ALLOWED_IMAGE_TYPES: [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp'
+  ],
+  ALLOWED_DOCUMENT_TYPES: [
+    'application/pdf',
+    'text/csv',
+    'text/plain'
+  ]
+};
+
+const RATE_LIMITS = {
+  WINDOW_MS: 60 * 1000,      // 1 minute
+  MAX_REQUESTS: 10,           // 10 receipts per minute
+  MAX_PER_HOUR: 100,          // 100 per hour
+  MAX_PER_DAY: 1000           // 1000 per day
+};
+
+// Simple in-memory rate limiter (production: use Redis)
+const rateLimits = new Map();
+
+function validateFile(file) {
+  // Size check
+  if (file.size > RECEIPT_LIMITS.MAX_FILE_SIZE) {
+    throw new Error(`File too large. Maximum size is 20MB (yours is ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+  }
+
+  // Type check
+  const isImage = RECEIPT_LIMITS.ALLOWED_IMAGE_TYPES.includes(file.type);
+  const isDoc = RECEIPT_LIMITS.ALLOWED_DOCUMENT_TYPES.includes(file.type);
+
+  if (!isImage && !isDoc) {
+    throw new Error(`Invalid file type: ${file.type}. Use JPEG, PNG, PDF, or text`);
+  }
+
+  console.log(`✅ File validation passed: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`);
+  return { isImage, isDoc };
+}
+
+function checkRateLimit(userId = 'anonymous') {
+  const now = Date.now();
+  const userKey = `receipt:${userId}`;
+
+  if (!rateLimits.has(userKey)) {
+    rateLimits.set(userKey, {
+      requests: [],
+      hourlyCount: 0,
+      dailyCount: 0,
+      hourReset: now + 3600000,
+      dayReset: now + 86400000
+    });
+  }
+
+  const userData = rateLimits.get(userKey);
+
+  // Clean old requests (older than 1 minute)
+  userData.requests = userData.requests.filter(
+    time => now - time < RATE_LIMITS.WINDOW_MS
+  );
+
+  // Reset hourly/daily counters BEFORE checking limits
+  if (now > userData.hourReset) {
+    userData.hourlyCount = 0;
+    userData.hourReset = now + 3600000;
+  }
+  if (now > userData.dayReset) {
+    userData.dailyCount = 0;
+    userData.dayReset = now + 86400000;
+  }
+
+  // Check limits
+  if (userData.requests.length >= RATE_LIMITS.MAX_REQUESTS) {
+    const resetIn = Math.ceil((userData.requests[0] + RATE_LIMITS.WINDOW_MS - now) / 1000);
+    throw new Error(`Rate limit exceeded. Please wait ${resetIn} seconds before uploading more receipts.`);
+  }
+
+  if (userData.hourlyCount >= RATE_LIMITS.MAX_PER_HOUR) {
+    const resetIn = Math.ceil((userData.hourReset - now) / 1000 / 60);
+    throw new Error(`Hourly limit reached (${RATE_LIMITS.MAX_PER_HOUR} receipts). Please try again in ${resetIn} minutes.`);
+  }
+
+  if (userData.dailyCount >= RATE_LIMITS.MAX_PER_DAY) {
+    const hoursUntilReset = Math.ceil((userData.dayReset - now) / 1000 / 60 / 60);
+    throw new Error(`Daily limit reached (${RATE_LIMITS.MAX_PER_DAY} receipts). Please try again in ${hoursUntilReset} hours.`);
+  }
+
+  // Add current request
+  userData.requests.push(now);
+  userData.hourlyCount++;
+  userData.dailyCount++;
+
+  console.log(`✅ Rate limit OK: ${RATE_LIMITS.MAX_REQUESTS - userData.requests.length} remaining this minute`);
+
+  return {
+    remaining: RATE_LIMITS.MAX_REQUESTS - userData.requests.length,
+    resetAt: userData.hourReset
+  };
+}
+
+async function compressReceiptImage(imageBuffer, mediaType) {
+  const TARGET_HEIGHT = 1200; // Good balance for receipt OCR
+  const JPEG_QUALITY = 85;    // High quality, good compression
+
+  try {
+    const image = sharp(imageBuffer);
+    const metadata = await image.metadata();
+
+    console.log(`📐 Original image: ${metadata.width}x${metadata.height} (${(imageBuffer.length / 1024).toFixed(1)}KB)`);
+
+    // Resize if too large
+    let processedImage = image;
+    if (metadata.height > TARGET_HEIGHT) {
+      processedImage = image.resize(null, TARGET_HEIGHT, {
+        fit: 'inside',
+        withoutEnlargement: true
+      });
+      console.log(`📏 Resizing to max height: ${TARGET_HEIGHT}px`);
+    }
+
+    // Convert to JPEG for better compression
+    const compressed = await processedImage
+      .jpeg({ quality: JPEG_QUALITY })
+      .toBuffer();
+
+    const compressionRatio = ((imageBuffer.length - compressed.length) / imageBuffer.length * 100).toFixed(1);
+    console.log(`✅ Compressed: ${(compressed.length / 1024).toFixed(1)}KB (${compressionRatio}% smaller)`);
+
+    return {
+      data: compressed.toString('base64'),
+      mediaType: 'image/jpeg',
+      originalSize: imageBuffer.length,
+      compressedSize: compressed.length,
+      compressionRatio: parseFloat(compressionRatio)
+    };
+
+  } catch (error) {
+    console.error('⚠️ Compression failed, using original:', error.message);
+    return {
+      data: imageBuffer.toString('base64'),
+      mediaType,
+      originalSize: imageBuffer.length,
+      compressedSize: imageBuffer.length,
+      compressionRatio: 0
+    };
+  }
+}
+
+function logAPIUsage(file, message, compressed = null) {
+  const usage = {
+    timestamp: new Date().toISOString(),
+    fileType: file.type,
+    fileName: file.name,
+    originalSize: file.size,
+    compressedSize: compressed?.compressedSize,
+    inputTokens: message.usage?.input_tokens || 0,
+    outputTokens: message.usage?.output_tokens || 0,
+    cacheReadTokens: message.usage?.cache_read_input_tokens || 0,
+    cacheCreationTokens: message.usage?.cache_creation_input_tokens || 0,
+    thinkingTokens: message.usage?.thinking_tokens || 0
+  };
+
+  // Calculate estimated cost (Claude Sonnet 4.5 pricing Nov 2025)
+  const INPUT_COST = 3 / 1000000;   // $3 per 1M tokens
+  const OUTPUT_COST = 15 / 1000000; // $15 per 1M tokens
+  const CACHE_COST = 0.3 / 1000000; // $0.30 per 1M tokens (90% discount)
+
+  const cost = (
+    (usage.inputTokens * INPUT_COST) +
+    (usage.outputTokens * OUTPUT_COST) +
+    (usage.cacheReadTokens * CACHE_COST)
+  );
+
+  usage.estimatedCost = parseFloat(cost.toFixed(6));
+  usage.compressionSavings = compressed
+    ? `${compressed.compressionRatio}%`
+    : 'N/A';
+
+  console.log('💰 API Usage:', JSON.stringify(usage, null, 2));
+
+  return usage;
 }
 
 // ==================== SMART PRE-PROCESSING ====================
@@ -133,6 +321,10 @@ const RECEIPT_ANALYSIS_SCHEMA = {
         additionalProperties: false
       }
     },
+    storeName: {
+      type: ["string", "null"],
+      description: "Store/merchant name (e.g., 'Kroger', 'Walmart', 'Target'), or null if not found"
+    },
     receiptDate: {
       type: ["string", "null"],
       description: "Receipt date in YYYY-MM-DD format, or null if not found"
@@ -151,7 +343,7 @@ const RECEIPT_ANALYSIS_SCHEMA = {
       description: "Brief summary of what was found"
     }
   },
-  required: ["items", "receiptDate", "totalItems", "skippedItems", "summary"],
+  required: ["items", "storeName", "receiptDate", "totalItems", "skippedItems", "summary"],
   additionalProperties: false
 };
 
@@ -217,6 +409,7 @@ Your job is to analyze receipts and extract ONLY perishable food items that need
 - Extract quantities when mentioned (e.g., "2 lbs" = quantity: 2)
 - Extract prices when visible
 - Look for purchase/receipt dates
+- Extract store/merchant name (Kroger, Walmart, Target, etc.)
 
 Be thorough but conservative - only track what truly needs monitoring.`;
 
@@ -240,8 +433,8 @@ function getExpiryStatus(expiryDate) {
  * Formats content for AI analysis based on file type
  */
 function formatReceiptPrompt(content, fileType) {
-  if (fileType?.startsWith('image/')) {
-    return `Analyze this receipt image and extract all perishable grocery items.
+  if (fileType?.startsWith('image/') || fileType === 'application/pdf') {
+    return `Analyze this receipt ${fileType === 'application/pdf' ? 'document' : 'image'} and extract all perishable grocery items.
 
 Extract:
 - Item names (convert to simple generic names)
@@ -275,31 +468,26 @@ async function extractFileContent(file) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    if (!pdf) {
-      const pdfParseModule = await import('pdf-parse');
-      pdf = pdfParseModule.default || pdfParseModule;
-    }
-
-    const pdfData = await pdf(buffer);
-    const pdfText = pdfData.text;
-
-    if (!pdfText.trim()) {
-      throw new Error("PDF appears to contain no readable text");
-    }
-
-    console.log(`✅ Extracted ${pdfText.length} characters from PDF`);
-    return { content: pdfText, type: 'text' };
+    console.log(`✅ PDF ready for Claude (${(buffer.length / 1024).toFixed(1)}KB)`);
+    return {
+      content: buffer.toString('base64'),
+      type: 'pdf',
+      mediaType: 'application/pdf'
+    };
 
   } else if (file.type.startsWith("image/")) {
     console.log("🖼️ Processing image file...");
     const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const base64 = Buffer.from(uint8Array).toString("base64");
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Compress image for cost savings
+    const compressed = await compressReceiptImage(buffer, file.type);
 
     return {
-      content: base64,
+      content: compressed.data,
       type: 'image',
-      mediaType: file.type
+      mediaType: compressed.mediaType,
+      compressed: compressed
     };
 
   } else if (file.type === "text/csv" || file.name.endsWith(".csv")) {
@@ -323,7 +511,7 @@ async function extractFileContent(file) {
 
 export async function POST(request) {
   try {
-    console.log("🚀 Starting optimized receipt analysis...");
+    console.log("🚀 Starting optimized receipt analysis with safeguards...");
 
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error("ANTHROPIC_API_KEY is missing");
@@ -335,6 +523,7 @@ export async function POST(request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const userId = formData.get("userId") || 'anonymous';
 
     if (!file) {
       console.error("No file provided in request");
@@ -342,6 +531,30 @@ export async function POST(request) {
     }
 
     console.log(`📄 File: ${file.name} (${file.size} bytes, ${file.type})`);
+
+    // ==================== VALIDATION & RATE LIMITING ====================
+
+    // Step 1: Validate file size and type
+    try {
+      validateFile(file);
+    } catch (validationError) {
+      console.error("❌ Validation failed:", validationError.message);
+      return NextResponse.json(
+        { error: validationError.message },
+        { status: 400 }
+      );
+    }
+
+    // Step 2: Check rate limits
+    try {
+      checkRateLimit(userId);
+    } catch (rateLimitError) {
+      console.error("❌ Rate limit exceeded:", rateLimitError.message);
+      return NextResponse.json(
+        { error: rateLimitError.message },
+        { status: 429 }
+      );
+    }
 
     // ==================== STEP 1: EXTRACT CONTENT ====================
     let extractedData;
@@ -360,10 +573,12 @@ export async function POST(request) {
 
     // ==================== STEP 2: SMART PRE-PROCESSING ====================
     let content = extractedData.content;
+    let wasPreprocessed = false;
 
     if (extractedData.type === 'text' && looksLikeWebCopyPaste(content)) {
       console.log("🔍 Detected web copy-paste (Kroger-style)");
       content = cleanWebReceiptContent(content);
+      wasPreprocessed = true;
     }
 
     // ==================== STEP 3: AI ANALYSIS WITH ADVANCED FEATURES ====================
@@ -371,7 +586,7 @@ export async function POST(request) {
 
     let messageConfig = {
       model: "claude-sonnet-4-5-20250929", // Latest model
-      max_tokens: 4000,
+      max_tokens: 8000,
 
       // PROMPT CACHING - saves ~90% on repeated calls
       system: [
@@ -385,17 +600,13 @@ export async function POST(request) {
       // EXTENDED THINKING - better accuracy for ambiguous items
       thinking: {
         type: "enabled",
-        budget_tokens: 5000
+        budget_tokens: 4000
       },
 
       // STRUCTURED OUTPUTS - guaranteed valid JSON
-      response_format: {
+      output_format: {
         type: "json_schema",
-        json_schema: {
-          name: "receipt_analysis",
-          strict: true,
-          schema: RECEIPT_ANALYSIS_SCHEMA
-        }
+        schema: RECEIPT_ANALYSIS_SCHEMA
       },
 
       messages: []
@@ -420,6 +631,24 @@ export async function POST(request) {
           }
         ]
       }];
+    } else if (extractedData.type === 'pdf') {
+      messageConfig.messages = [{
+        role: "user",
+        content: [
+          {
+            type: "document",
+            source: {
+              type: "base64",
+              media_type: extractedData.mediaType,
+              data: content
+            }
+          },
+          {
+            type: "text",
+            text: formatReceiptPrompt(content, file.type)
+          }
+        ]
+      }];
     } else {
       messageConfig.messages = [{
         role: "user",
@@ -429,7 +658,10 @@ export async function POST(request) {
 
     let message;
     try {
-      message = await anthropic.messages.create(messageConfig);
+      message = await anthropic.beta.messages.create({
+        ...messageConfig,
+        betas: ["structured-outputs-2025-11-13"]
+      });
       console.log("✅ AI TRIP: Completed analysis");
       console.log(`💭 Thinking tokens used: ${message.usage?.thinking_tokens || 0}`);
       console.log(`📊 Cache usage: ${message.usage?.cache_read_input_tokens || 0} cached tokens read`);
@@ -448,7 +680,7 @@ export async function POST(request) {
     let analysisResult;
     try {
       // With structured outputs, we get guaranteed valid JSON
-      const responseText = message.content.find(block => block.type === 'text')?.text;
+      const responseText = message.content?.find(block => block.type === 'text')?.text;
 
       if (!responseText) {
         throw new Error("No text content in AI response");
@@ -517,19 +749,40 @@ export async function POST(request) {
     // ==================== STEP 6: RETURN RESULTS ====================
     console.log(`✅ Successfully processed receipt: ${processedItems.length} perishable items ready`);
 
+    // Get usage stats for response
+    const usageStats = logAPIUsage(file, message, extractedData.compressed);
+
     return NextResponse.json({
       analysis: analysisResult.summary,
       groceryItems: processedItems,
       itemsFound: processedItems.length,
       receiptDate: analysisResult.receiptDate,
+      storeName: analysisResult.storeName,
       summary: analysisResult.summary,
       skippedItems: analysisResult.skippedItems || [],
       totalItemsAnalyzed: analysisResult.totalItems,
+      batchMetadata: {
+        source: 'receipt',
+        storeName: analysisResult.storeName,
+        uploadedAt: new Date().toISOString()
+      },
       optimizations: {
         promptCaching: true,
         extendedThinking: true,
         structuredOutputs: true,
-        smartPreProcessing: extractedData.type === 'text' && looksLikeWebCopyPaste(extractedData.content)
+        smartPreProcessing: wasPreprocessed,
+        imageCompression: extractedData.compressed ? true : false,
+        nativePdfSupport: extractedData.type === 'pdf'
+      },
+      meta: {
+        tokensUsed: usageStats.inputTokens + usageStats.outputTokens,
+        estimatedCost: `$${usageStats.estimatedCost}`,
+        compressionSavings: usageStats.compressionSavings,
+        cacheHit: usageStats.cacheReadTokens > 0,
+        fileSize: {
+          original: `${(file.size / 1024).toFixed(1)}KB`,
+          compressed: extractedData.compressed ? `${(extractedData.compressed.compressedSize / 1024).toFixed(1)}KB` : 'N/A'
+        }
       }
     });
 
