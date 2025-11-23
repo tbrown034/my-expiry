@@ -37,7 +37,7 @@ export default function Error({ error, reset }) {
                 Something Went Rotten!
               </h2>
               <p className="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
-                We hit a snag while managing your fridge. Don't worry, your groceries are still safe!
+                We hit a snag while managing your fridge. Don&apos;t worry, your groceries are still safe!
               </p>
 
               <div className="space-y-3">

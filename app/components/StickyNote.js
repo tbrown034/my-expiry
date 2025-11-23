@@ -183,79 +183,83 @@ export default function StickyNote({
                 </div>
               </div>
 
-              {/* Action menu - cleaner mobile UX */}
-              <div className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                <ActionMenu
-                  actions={[
-                    {
-                      label: 'View Details',
-                      icon: (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      ),
-                      onClick: () => onItemClick(item),
-                      color: 'text-blue-600'
-                    },
-                    ...(!item.eaten ? [
+              {/* Action buttons - delete item and more options */}
+              <div className="flex-shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                {/* Delete individual item button - always visible */}
+                {!item.eaten && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteItem(item.id);
+                    }}
+                    className="interactive-button p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                    aria-label={`Delete ${item.name}`}
+                    title="Delete this item"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+
+                {/* Action menu for other options */}
+                <div className="opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity">
+                  <ActionMenu
+                    actions={[
                       {
-                        label: 'Edit Item',
+                        label: 'View Details',
                         icon: (
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         ),
-                        onClick: () => onEditItem(item.id),
-                        color: 'text-amber-600'
+                        onClick: () => onItemClick(item),
+                        color: 'text-blue-600'
                       },
-                      {
-                        label: 'Mark as Eaten',
-                        icon: (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ),
-                        onClick: () => handleItemAction({ stopPropagation: () => {} }, item, 'eaten'),
-                        color: 'text-green-600'
-                      },
-                      {
-                        label: 'Delete Item',
-                        icon: (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        ),
-                        onClick: () => {
-                          if (confirm(`Delete ${item.name}?`)) {
-                            onDeleteItem(item.id);
-                          }
+                      ...(!item.eaten ? [
+                        {
+                          label: 'Edit Item',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          ),
+                          onClick: () => onEditItem(item.id),
+                          color: 'text-amber-600'
                         },
-                        color: 'text-red-600'
-                      }
-                    ] : [])
-                  ]}
-                  align="right"
-                />
+                        {
+                          label: 'Mark as Eaten',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ),
+                          onClick: () => handleItemAction({ stopPropagation: () => {} }, item, 'eaten'),
+                          color: 'text-green-600'
+                        }
+                      ] : [])
+                    ]}
+                    align="right"
+                  />
+                </div>
               </div>
             </div>
           </li>
         ))}
       </ul>
 
-      {/* Delete note button - improved for mobile */}
+      {/* Delete entire note button - X in top right, always visible */}
       <button
         onClick={(e) => {
           e.stopPropagation();
-          if (confirm(`Delete this shopping trip with ${items.length} item${items.length !== 1 ? 's' : ''}?`)) {
-            onDeleteNote(purchaseDate);
-          }
+          onDeleteNote(purchaseDate);
         }}
-        className="absolute top-3 right-3 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all interactive"
-        aria-label="Delete shopping trip"
+        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all interactive"
+        aria-label="Delete entire note"
         title="Delete entire shopping trip"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>

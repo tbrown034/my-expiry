@@ -2,7 +2,7 @@
 
 export default function AddToFridgePage({ onSelectMethod, onBack }) {
   return (
-    <div className="h-full flex-1 bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
       {/* Metallic texture */}
       <div className="absolute inset-0 opacity-30 pointer-events-none"
         style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255,255,255,0.02) 1px, rgba(255,255,255,0.02) 2px)` }}

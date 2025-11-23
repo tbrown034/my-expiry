@@ -30,7 +30,7 @@ export default function GlobalError({ error, reset }) {
               <div className="text-6xl mb-4">😵</div>
               <h1 className="text-2xl font-bold mb-3">Oops! Something went wrong</h1>
               <p className="text-sm text-slate-600 mb-6">
-                We've run into an unexpected problem. Don't worry - your data is safe!
+                We&apos;ve run into an unexpected problem. Don&apos;t worry - your data is safe!
               </p>
 
               <div className="space-y-3">

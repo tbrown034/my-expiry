@@ -55,7 +55,7 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
   const filledLines = lines.filter((line) => line.trim() !== "").length;
 
   return (
-    <div className="h-full flex-1 bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
       {/* Metallic texture */}
       <div
         className="absolute inset-0 opacity-30 pointer-events-none"
