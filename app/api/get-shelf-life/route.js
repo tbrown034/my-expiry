@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from 'next/server';
+import { logError, createErrorResponse } from '../../../lib/errorHandling';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -272,11 +273,24 @@ function getExpiryStatus(expiryDate) {
 
 export async function POST(request) {
   try {
+    // Check API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      const error = new Error('ANTHROPIC_API_KEY not configured');
+      return createErrorResponse('App configuration error. Please contact support.', error, 500);
+    }
+
     const body = await request.json();
     const { items } = body;
 
+    // Validate items array
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Items array required' }, { status: 400 });
+      const error = new Error('Items array required');
+      return createErrorResponse('No items provided. Please add items first.', error, 400);
+    }
+
+    if (items.length > 50) {
+      const error = new Error('Too many items');
+      return createErrorResponse('Maximum 50 items allowed per request.', error, 400);
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -301,19 +315,22 @@ export async function POST(request) {
       };
     });
 
+    if (processedItems.length === 0) {
+      const error = new Error('No shelf life data returned');
+      return createErrorResponse('Could not get shelf life data. Please try again.', error, 500);
+    }
+
     console.log(`✅ Got shelf life for ${processedItems.length} items`);
     console.log(`📊 Sources: ${processedItems.map(i => i.source).join(', ')}`);
 
     return NextResponse.json({
       stage: 2,
-      items: processedItems
+      items: processedItems,
+      message: `Successfully retrieved shelf life for ${processedItems.length} items.`
     });
 
   } catch (error) {
-    console.error('❌ Error getting shelf life:', error);
-    return NextResponse.json(
-      { error: 'Failed to get shelf life information', details: error.message },
-      { status: 500 }
-    );
+    logError(error, { endpoint: 'get-shelf-life', method: 'POST', itemCount: items?.length });
+    return createErrorResponse('Could not get shelf life information. Please try again.', error, 500);
   }
 }

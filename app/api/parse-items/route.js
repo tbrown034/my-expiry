@@ -1,5 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from 'next/server';
+import { logError, createErrorResponse, validateInput } from '../../../lib/errorHandling';
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("❌ ANTHROPIC_API_KEY environment variable is not set");
+}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -70,10 +75,17 @@ async function parseItemsWithClaude(rawInput) {
 
 export async function POST(request) {
   try {
+    // Check API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      const error = new Error('ANTHROPIC_API_KEY not configured');
+      return createErrorResponse('App configuration error. Please contact support.', error, 500);
+    }
+
+    // Parse request body
     const body = await request.json();
     const { items, rawText } = body;
 
-    // Accept either array of items or raw text
+    // Get input text
     let inputText;
     if (rawText) {
       inputText = rawText;
@@ -82,26 +94,37 @@ export async function POST(request) {
     } else if (items) {
       inputText = items;
     } else {
-      return NextResponse.json({ error: 'No items provided' }, { status: 400 });
+      const error = new Error('No items provided');
+      return createErrorResponse('Please enter at least one item to add.', error, 400);
     }
 
-    console.log(`📝 Stage 1: Parsing ${inputText.split('\n').length} items...`);
+    // Validate input
+    const validation = validateInput(inputText, { maxLength: 10000, minLength: 1 });
+    if (!validation.isValid) {
+      const error = new Error(validation.error);
+      return createErrorResponse(validation.error, error, 400);
+    }
 
-    const parsed = await parseItemsWithClaude(inputText);
+    console.log(`📝 Stage 1: Parsing ${validation.sanitized.split('\n').length} items...`);
+
+    // Parse with Claude
+    const parsed = await parseItemsWithClaude(validation.sanitized);
+
+    if (!parsed.items || parsed.items.length === 0) {
+      const error = new Error('No items could be parsed from input');
+      return createErrorResponse('Could not understand the items. Please check the format and try again.', error, 400);
+    }
 
     console.log(`✅ Parsed ${parsed.items.length} items`);
 
     return NextResponse.json({
       stage: 1,
       items: parsed.items,
-      message: "Items parsed. Review and confirm before getting shelf life."
+      message: "Items parsed successfully. Review and confirm before getting shelf life."
     });
 
   } catch (error) {
-    console.error('❌ Error parsing items:', error);
-    return NextResponse.json(
-      { error: 'Failed to parse items', details: error.message },
-      { status: 500 }
-    );
+    logError(error, { endpoint: 'parse-items', method: 'POST' });
+    return createErrorResponse('Could not parse items. Please try again.', error, 500);
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { getUserFriendlyMessage } from '../lib/errorHandling';
 import FridgeDoor from './components/FridgeDoor';
 import FoodInventory from './components/FoodInventory';
 import AddGroceryForm from './components/AddGroceryForm';
@@ -168,7 +169,12 @@ export default function MainClient() {
         body: JSON.stringify({ items: itemNames })
       });
 
-      if (!response.ok) throw new Error('Failed to parse items');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Parse items API error:', errorData);
+        const error = new Error(errorData.error || errorData.details || 'Failed to parse items');
+        throw error;
+      }
 
       const parseResult = await response.json();
 
@@ -190,8 +196,9 @@ export default function MainClient() {
       setShowBatchPopup(true);
       setShowBatchForm(false);
     } catch (error) {
-      console.error('Error parsing items:', error);
-      showToast('Could not parse items. Please try again.', 'error');
+      console.error('❌ Error parsing items:', error);
+      const userMessage = getUserFriendlyMessage(error, 'parse-items');
+      showToast(userMessage, 'error');
     } finally {
       setIsLoadingShelfLife(false);
     }
