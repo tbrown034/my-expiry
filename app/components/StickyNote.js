@@ -69,9 +69,9 @@ export default function StickyNote({
     <div
       className={`
         sticky-note ${colorScheme.bg} ${colorScheme.border} ${rotation}
-        relative p-4 sm:p-5 rounded-sm border-2
+        relative p-4 rounded-sm border-2
         transition-all duration-300 interactive group
-        min-h-[220px] sm:min-h-[240px]
+        min-h-[200px]
       `}
       style={{
         boxShadow: '0 4px 8px rgba(0,0,0,0.25), 0 8px 16px rgba(0,0,0,0.15)',
@@ -90,19 +90,19 @@ export default function StickyNote({
       ></div>
 
       {/* Header with batch description and date */}
-      <div className="w-full mb-3 pb-3 border-b border-gray-400/30">
+      <div className="w-full mb-3 pb-2 border-b border-gray-400/30">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-sm sm:text-base font-bold text-gray-800 font-handwritten">
-              <span className="mr-2" role="img" aria-label="Note">📝</span>
+            <h3 className="text-base font-bold text-gray-800 font-handwritten leading-tight">
+              <span className="mr-1" role="img" aria-label="Note">📝</span>
               {batchDescription}
               {isPartial && <span className="text-xs ml-1">({partNumber}/{totalParts})</span>}
             </h3>
-            <p className="text-xs text-gray-600 mt-1">{formatDate(purchaseDate)}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{formatDate(purchaseDate)}</p>
           </div>
         </div>
         {(eatenCount > 0 || expiredCount > 0 || activeCount > 0) && (
-          <div className="text-xs sm:text-sm text-gray-700 mt-2 flex flex-wrap gap-2">
+          <div className="text-xs text-gray-700 mt-2 flex flex-wrap gap-1.5">
             {activeCount > 0 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                 {activeCount} active
@@ -123,7 +123,7 @@ export default function StickyNote({
       </div>
 
       {/* Items list - improved readability */}
-      <ul className="space-y-2.5 mb-3" role="list">
+      <ul className="space-y-2 mb-2" role="list">
         {items.map((item) => (
           <li
             key={item.id}

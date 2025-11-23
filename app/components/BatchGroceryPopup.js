@@ -332,8 +332,8 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 rounded-lg shadow-2xl relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="w-full max-w-6xl h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 rounded-none sm:rounded-lg shadow-2xl relative">
         {/* Metallic texture */}
         <div className="absolute inset-0 opacity-30 pointer-events-none rounded-lg"
           style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255,255,255,0.02) 1px, rgba(255,255,255,0.02) 2px)` }}
@@ -344,58 +344,58 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
         />
 
         {/* Header with step indicators as mini sticky notes */}
-        <div className="relative z-10 p-6 pb-4 border-b border-slate-500/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className="relative z-10 p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-500/50">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-100 order-2 sm:order-1">
+              {stage === 1 ? 'Check Your Items' : 'Review Shelf Life'}
+            </h2>
+
+            <div className="flex items-center gap-2 sm:gap-3 order-1 sm:order-2">
               {/* Step 1 mini note */}
               <div className="relative" style={{ transform: 'rotate(-2deg)' }}>
                 <div
-                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  className="absolute -top-2 sm:-top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 sm:w-3 sm:h-3 rounded-full"
                   style={{
                     background: stage >= 1 ? 'radial-gradient(circle at 30% 30%, #4ade80 0%, #22c55e 50%, #15803d 100%)' : 'radial-gradient(circle at 30% 30%, #9ca3af 0%, #6b7280 50%, #4b5563 100%)',
                     boxShadow: '0 2px 3px rgba(0,0,0,0.3)',
                   }}
                 />
-                <div className={`bg-gradient-to-br ${stage >= 1 ? 'from-green-100 via-green-50 to-emerald-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-3 py-2 shadow-md`}>
-                  <span className="font-bold text-slate-700">1</span>
+                <div className={`bg-gradient-to-br ${stage >= 1 ? 'from-green-100 via-green-50 to-emerald-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-4 py-2.5 sm:px-3 sm:py-2 shadow-md`}>
+                  <span className="font-bold text-slate-700 text-base sm:text-sm">1</span>
                 </div>
               </div>
 
-              <div className="w-8 h-px bg-slate-400"></div>
+              <div className="w-6 sm:w-8 h-px bg-slate-400"></div>
 
               {/* Step 2 mini note */}
               <div className="relative" style={{ transform: 'rotate(2deg)' }}>
                 <div
-                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  className="absolute -top-2 sm:-top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 sm:w-3 sm:h-3 rounded-full"
                   style={{
                     background: stage >= 2 ? 'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1e40af 100%)' : 'radial-gradient(circle at 30% 30%, #9ca3af 0%, #6b7280 50%, #4b5563 100%)',
                     boxShadow: '0 2px 3px rgba(0,0,0,0.3)',
                   }}
                 />
-                <div className={`bg-gradient-to-br ${stage >= 2 ? 'from-blue-100 via-blue-50 to-sky-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-3 py-2 shadow-md`}>
-                  <span className="font-bold text-slate-700">2</span>
+                <div className={`bg-gradient-to-br ${stage >= 2 ? 'from-blue-100 via-blue-50 to-sky-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-4 py-2.5 sm:px-3 sm:py-2 shadow-md`}>
+                  <span className="font-bold text-slate-700 text-base sm:text-sm">2</span>
                 </div>
               </div>
             </div>
-
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-100">
-              {stage === 1 ? 'Check Your Items' : 'Review Shelf Life'}
-            </h2>
           </div>
         </div>
 
         {/* Info Banner as sticky note */}
-        <div className="relative z-10 px-6 pt-4">
-          <div className="relative inline-block" style={{ transform: 'rotate(-0.5deg)' }}>
+        <div className="relative z-10 px-4 sm:px-6 pt-3 sm:pt-4">
+          <div className="relative inline-block w-full sm:w-auto" style={{ transform: 'rotate(-0.5deg)' }}>
             <div
-              className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full"
+              className="absolute -top-2 left-1/2 -translate-x-1/2 w-5 h-5 sm:w-4 sm:h-4 rounded-full"
               style={{
                 background: 'radial-gradient(circle at 30% 30%, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
               }}
             />
-            <div className="bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-50 rounded-sm px-4 py-3 shadow-md max-w-3xl">
-              <p className="text-sm text-slate-700">
+            <div className="bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-50 rounded-sm px-3 sm:px-4 py-2.5 sm:py-3 shadow-md w-full sm:max-w-3xl">
+              <p className="text-sm sm:text-sm text-slate-700">
                 {stage === 1
                   ? '💡 Review and edit your items below. Make sure everything looks right before we look up shelf life!'
                   : '✅ Shelf life data from USDA/FDA. Adjust if needed, then add to your fridge.'}
@@ -422,8 +422,8 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
         )}
 
         {/* Items List - Grid of sticky notes */}
-        <div className="flex-1 overflow-y-auto relative z-10 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex-1 overflow-y-auto relative z-10 p-4 sm:p-6 pb-24 sm:pb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {items.map((item, index) => {
               const colorClass = stickyNoteColors[index % stickyNoteColors.length];
               const magnetColor = magnetColors[index % magnetColors.length];
@@ -450,64 +450,64 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
                       />
 
                       {/* Sticky note */}
-                      <div className={`relative bg-gradient-to-br ${colorClass} rounded-sm p-4 shadow-lg`}>
+                      <div className={`relative bg-gradient-to-br ${colorClass} rounded-sm p-5 sm:p-4 shadow-lg`}>
                         {/* Delete button */}
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md"
+                          className="absolute top-2 right-2 w-8 h-8 sm:w-6 sm:h-6 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md"
                           title="Remove item"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
 
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-4 sm:space-y-3 pt-2">
                           {/* Name */}
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Item Name</label>
+                            <label className="block text-sm sm:text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">Item Name</label>
                             <input
                               type="text"
                               value={item.name}
                               onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                              className="w-full bg-transparent border-b-2 border-slate-300 focus:border-slate-600 px-1 py-1 text-slate-800 focus:outline-none transition-colors"
+                              className="w-full bg-transparent border-b-2 border-slate-300 focus:border-slate-600 px-1 py-2 sm:py-1 text-base sm:text-sm text-slate-800 focus:outline-none transition-colors"
                               style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
                             />
                           </div>
 
                           {/* Modifier */}
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Details (optional)</label>
+                            <label className="block text-sm sm:text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">Details (optional)</label>
                             <input
                               type="text"
                               value={item.modifier}
                               onChange={(e) => updateItem(item.id, 'modifier', e.target.value)}
                               placeholder="brand, size..."
-                              className="w-full bg-transparent border-b border-slate-300 focus:border-slate-600 px-1 py-1 text-sm text-slate-700 placeholder-slate-400 focus:outline-none transition-colors"
+                              className="w-full bg-transparent border-b border-slate-300 focus:border-slate-600 px-1 py-2 sm:py-1 text-base sm:text-sm text-slate-700 placeholder-slate-400 focus:outline-none transition-colors"
                               style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
                             />
                           </div>
 
                           {/* Purchase Date */}
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Bought On</label>
+                            <label className="block text-sm sm:text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">Bought On</label>
                             <input
                               type="date"
                               value={item.purchaseDate}
                               onChange={(e) => updateItem(item.id, 'purchaseDate', e.target.value)}
                               max={new Date().toISOString().split('T')[0]}
-                              className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                              className="w-full bg-white/50 border border-slate-300 rounded px-3 py-2.5 sm:px-2 sm:py-1 text-base sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
                             />
                           </div>
 
                           {/* Category & Type */}
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-2 gap-3 sm:gap-2">
                             <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Category</label>
+                              <label className="block text-sm sm:text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">Category</label>
                               <select
                                 value={item.category}
                                 onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                className="w-full bg-white/50 border border-slate-300 rounded px-3 py-2.5 sm:px-2 sm:py-1 text-sm sm:text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
                               >
                                 <option value={Category.DAIRY}>Dairy</option>
                                 <option value={Category.MEAT}>Meat</option>
@@ -521,11 +521,11 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+                              <label className="block text-sm sm:text-xs font-medium text-slate-600 mb-1.5 sm:mb-1">Type</label>
                               <select
                                 value={item.foodType}
                                 onChange={(e) => updateItem(item.id, 'foodType', e.target.value)}
-                                className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                className="w-full bg-white/50 border border-slate-300 rounded px-3 py-2.5 sm:px-2 sm:py-1 text-sm sm:text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
                               >
                                 <option value="store-bought">Store</option>
                                 <option value="premade">Deli</option>
@@ -652,13 +652,13 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
         </div>
 
         {/* Actions */}
-        <div className="relative z-10 flex gap-3 p-6 pt-4 border-t border-slate-500/50 bg-slate-600/30">
+        <div className="relative z-10 flex flex-col sm:flex-row gap-3 p-4 sm:p-6 pt-4 border-t border-slate-500/50 bg-slate-600/30 pb-safe">
           {stage === 1 ? (
             <>
               {onAddMoreItems && (
                 <button
                   onClick={() => onAddMoreItems(items)}
-                  className="px-5 py-3 bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur-sm text-white rounded-lg shadow-lg transition-all flex items-center gap-2 font-medium hover:shadow-emerald-500/30 hover:shadow-xl interactive"
+                  className="w-full sm:w-auto px-5 py-3.5 sm:py-3 bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur-sm text-white rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 font-medium hover:shadow-emerald-500/30 hover:shadow-xl interactive text-base sm:text-sm"
                   title="Add more items to this batch"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -670,7 +670,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               <button
                 onClick={handleGetShelfLife}
                 disabled={items.length === 0 || isLoadingShelfLife}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 font-semibold"
+                className="flex-1 w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3.5 sm:py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 font-semibold text-base sm:text-sm min-h-[48px]"
               >
                 {isLoadingShelfLife ? (
                   <div className="flex flex-col items-center gap-2 py-2">
@@ -701,7 +701,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               </button>
               <button
                 onClick={onCancel}
-                className="px-6 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium hover:shadow-xl"
+                className="w-full sm:w-auto px-6 py-3.5 sm:py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium hover:shadow-xl text-base sm:text-sm min-h-[48px]"
               >
                 Cancel
               </button>
@@ -710,7 +710,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
             <>
               <button
                 onClick={() => setStage(1)}
-                className="px-5 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all flex items-center gap-2 font-medium"
+                className="w-full sm:w-auto px-5 py-3.5 sm:py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all flex items-center justify-center gap-2 font-medium text-base sm:text-sm min-h-[48px]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -720,13 +720,13 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               <button
                 onClick={handleConfirm}
                 disabled={items.length === 0}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
+                className="flex-1 w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3.5 sm:py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold text-base sm:text-sm min-h-[48px]"
               >
                 Add to Fridge ({items.length})
               </button>
               <button
                 onClick={onCancel}
-                className="px-6 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium"
+                className="w-full sm:w-auto px-6 py-3.5 sm:py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium text-base sm:text-sm min-h-[48px]"
               >
                 Cancel
               </button>
