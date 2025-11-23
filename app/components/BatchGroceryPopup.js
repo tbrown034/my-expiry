@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Category } from '../../lib/types';
+import { getRandomFacts } from '../../lib/foodSafetyFacts';
 
 export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, onAddMoreItems }) {
   const [items, setItems] = useState([]);
   const [stage, setStage] = useState(1); // 1 = review parsed items, 2 = review shelf life
   const [isLoadingShelfLife, setIsLoadingShelfLife] = useState(false);
   const [error, setError] = useState(null);
+  const [currentFactIndex, setCurrentFactIndex] = useState(0);
+  const [foodFacts, setFoodFacts] = useState([]);
 
   // Optimistic prefetching state
   const [prefetchedData, setPrefetchedData] = useState(null);
@@ -42,6 +45,22 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
       })));
     }
   }, [batchResult]);
+
+  // Rotate food facts while loading
+  useEffect(() => {
+    if (isLoadingShelfLife) {
+      // Get random facts when loading starts
+      setFoodFacts(getRandomFacts(5));
+      setCurrentFactIndex(0);
+
+      // Rotate through facts every 4 seconds
+      const interval = setInterval(() => {
+        setCurrentFactIndex(prev => (prev + 1) % 5);
+      }, 4000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isLoadingShelfLife]);
 
   // Optimistic prefetching: debounce items changes and prefetch shelf life
   useEffect(() => {
@@ -294,193 +313,355 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
     return <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">AI Est.</span>;
   };
 
+  const stickyNoteColors = [
+    'from-yellow-100 via-yellow-50 to-amber-50',
+    'from-pink-100 via-pink-50 to-rose-50',
+    'from-blue-100 via-blue-50 to-sky-50',
+    'from-green-100 via-green-50 to-emerald-50',
+    'from-purple-100 via-purple-50 to-violet-50',
+    'from-orange-100 via-orange-50 to-amber-50',
+  ];
+
+  const magnetColors = [
+    'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #991b1b 100%)',
+    'radial-gradient(circle at 30% 30%, #f472b6 0%, #ec4899 50%, #be185d 100%)',
+    'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1e40af 100%)',
+    'radial-gradient(circle at 30% 30%, #4ade80 0%, #22c55e 50%, #15803d 100%)',
+    'radial-gradient(circle at 30% 30%, #a78bfa 0%, #8b5cf6 50%, #6d28d9 100%)',
+    'radial-gradient(circle at 30% 30%, #fb923c 0%, #f97316 50%, #c2410c 100%)',
+  ];
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">
-            {stage === 1 ? 'Step 1: Review Parsed Items' : 'Step 2: Review Shelf Life'}
-          </h2>
-          <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${stage >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>1</div>
-            <div className="w-8 h-0.5 bg-gray-200"></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${stage >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>2</div>
+      <div className="w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 rounded-lg shadow-2xl relative">
+        {/* Metallic texture */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none rounded-lg"
+          style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255,255,255,0.02) 1px, rgba(255,255,255,0.02) 2px)` }}
+        />
+        {/* Light reflection */}
+        <div className="absolute inset-0 pointer-events-none rounded-lg"
+          style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.05) 100%)' }}
+        />
+
+        {/* Header with step indicators as mini sticky notes */}
+        <div className="relative z-10 p-6 pb-4 border-b border-slate-500/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Step 1 mini note */}
+              <div className="relative" style={{ transform: 'rotate(-2deg)' }}>
+                <div
+                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  style={{
+                    background: stage >= 1 ? 'radial-gradient(circle at 30% 30%, #4ade80 0%, #22c55e 50%, #15803d 100%)' : 'radial-gradient(circle at 30% 30%, #9ca3af 0%, #6b7280 50%, #4b5563 100%)',
+                    boxShadow: '0 2px 3px rgba(0,0,0,0.3)',
+                  }}
+                />
+                <div className={`bg-gradient-to-br ${stage >= 1 ? 'from-green-100 via-green-50 to-emerald-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-3 py-2 shadow-md`}>
+                  <span className="font-bold text-slate-700">1</span>
+                </div>
+              </div>
+
+              <div className="w-8 h-px bg-slate-400"></div>
+
+              {/* Step 2 mini note */}
+              <div className="relative" style={{ transform: 'rotate(2deg)' }}>
+                <div
+                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  style={{
+                    background: stage >= 2 ? 'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1e40af 100%)' : 'radial-gradient(circle at 30% 30%, #9ca3af 0%, #6b7280 50%, #4b5563 100%)',
+                    boxShadow: '0 2px 3px rgba(0,0,0,0.3)',
+                  }}
+                />
+                <div className={`bg-gradient-to-br ${stage >= 2 ? 'from-blue-100 via-blue-50 to-sky-50' : 'from-gray-100 via-gray-50 to-slate-50'} rounded-sm px-3 py-2 shadow-md`}>
+                  <span className="font-bold text-slate-700">2</span>
+                </div>
+              </div>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100">
+              {stage === 1 ? 'Check Your Items' : 'Review Shelf Life'}
+            </h2>
           </div>
         </div>
 
-        {/* Info Banner */}
-        <div className={`mb-4 p-3 rounded-md ${stage === 1 ? 'bg-blue-50' : 'bg-green-50'}`}>
-          <p className={`text-sm ${stage === 1 ? 'text-blue-800' : 'text-green-800'}`}>
-            {stage === 1
-              ? 'Review and adjust the AI-parsed items. Edit names, categories, or types before getting shelf life data.'
-              : 'Shelf life data from official sources (USDA/FDA). Adjust if needed, then add to your fridge.'}
-          </p>
+        {/* Info Banner as sticky note */}
+        <div className="relative z-10 px-6 pt-4">
+          <div className="relative inline-block" style={{ transform: 'rotate(-0.5deg)' }}>
+            <div
+              className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 30% 30%, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+              }}
+            />
+            <div className="bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-50 rounded-sm px-4 py-3 shadow-md max-w-3xl">
+              <p className="text-sm text-slate-700">
+                {stage === 1
+                  ? '💡 Review and edit your items below. Make sure everything looks right before we look up shelf life!'
+                  : '✅ Shelf life data from USDA/FDA. Adjust if needed, then add to your fridge.'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 rounded-md">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="relative z-10 px-6 pt-4">
+            <div className="relative inline-block" style={{ transform: 'rotate(0.5deg)' }}>
+              <div
+                className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #991b1b 100%)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+                }}
+              />
+              <div className="bg-gradient-to-br from-red-100 via-red-50 to-rose-50 rounded-sm px-4 py-3 shadow-md">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Items List */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-4">
-            {items.map((item) => (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                {stage === 1 ? (
-                  // Stage 1: Edit parsed items
-                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                    <div className="md:col-span-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        {/* Items List - Grid of sticky notes */}
+        <div className="flex-1 overflow-y-auto relative z-10 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item, index) => {
+              const colorClass = stickyNoteColors[index % stickyNoteColors.length];
+              const magnetColor = magnetColors[index % magnetColors.length];
+              const rotation = (index % 3 === 0) ? -1.5 : (index % 3 === 1) ? 1 : -0.5;
+
+              return (
+                <div key={item.id} className="relative group">
+                  {stage === 1 ? (
+                    // Stage 1: Edit parsed items as sticky note
+                    <div
+                      className="relative transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                      style={{ transform: `rotate(${rotation}deg)` }}
+                    >
+                      {/* Shadow */}
+                      <div className="absolute inset-0 bg-black/20 rounded-sm translate-y-2 translate-x-1" />
+
+                      {/* Magnet */}
+                      <div
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full z-10"
+                        style={{
+                          background: magnetColor,
+                          boxShadow: '0 3px 6px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+                        }}
                       />
-                    </div>
-                    <div className="md:col-span-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Modifier</label>
-                      <input
-                        type="text"
-                        value={item.modifier}
-                        onChange={(e) => updateItem(item.id, 'modifier', e.target.value)}
-                        placeholder="brand, size, etc."
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="md:col-span-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Bought On</label>
-                      <input
-                        type="date"
-                        value={item.purchaseDate}
-                        onChange={(e) => updateItem(item.id, 'purchaseDate', e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="md:col-span-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                      <select
-                        value={item.category}
-                        onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value={Category.DAIRY}>Dairy</option>
-                        <option value={Category.MEAT}>Meat</option>
-                        <option value={Category.VEGETABLES}>Vegetables</option>
-                        <option value={Category.FRUITS}>Fruits</option>
-                        <option value={Category.BAKERY}>Bakery</option>
-                        <option value={Category.FROZEN}>Frozen</option>
-                        <option value={Category.PANTRY}>Pantry</option>
-                        <option value={Category.BEVERAGES}>Beverages</option>
-                        <option value={Category.OTHER}>Other</option>
-                      </select>
-                    </div>
-                    <div className="md:col-span-1">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                      <select
-                        value={item.foodType}
-                        onChange={(e) => updateItem(item.id, 'foodType', e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="store-bought">Store-bought</option>
-                        <option value="premade">Premade/Deli</option>
-                        <option value="leftover">Leftover</option>
-                      </select>
-                    </div>
-                    <div className="md:col-span-1 flex justify-center">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                        title="Remove item"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  // Stage 2: Show shelf life with source
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        {item.modifier && <p className="text-sm text-gray-500">{item.modifier}</p>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getSourceBadge(item.source)}
-                        {getConfidenceBadge(item.confidence)}
+
+                      {/* Sticky note */}
+                      <div className={`relative bg-gradient-to-br ${colorClass} rounded-sm p-4 shadow-lg`}>
+                        {/* Delete button */}
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md"
+                          title="Remove item"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
+
+                        <div className="space-y-3 pt-2">
+                          {/* Name */}
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Item Name</label>
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                              className="w-full bg-transparent border-b-2 border-slate-300 focus:border-slate-600 px-1 py-1 text-slate-800 focus:outline-none transition-colors"
+                              style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
+                            />
+                          </div>
+
+                          {/* Modifier */}
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Details (optional)</label>
+                            <input
+                              type="text"
+                              value={item.modifier}
+                              onChange={(e) => updateItem(item.id, 'modifier', e.target.value)}
+                              placeholder="brand, size..."
+                              className="w-full bg-transparent border-b border-slate-300 focus:border-slate-600 px-1 py-1 text-sm text-slate-700 placeholder-slate-400 focus:outline-none transition-colors"
+                              style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
+                            />
+                          </div>
+
+                          {/* Purchase Date */}
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Bought On</label>
+                            <input
+                              type="date"
+                              value={item.purchaseDate}
+                              onChange={(e) => updateItem(item.id, 'purchaseDate', e.target.value)}
+                              max={new Date().toISOString().split('T')[0]}
+                              className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                          </div>
+
+                          {/* Category & Type */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Category</label>
+                              <select
+                                value={item.category}
+                                onChange={(e) => updateItem(item.id, 'category', e.target.value)}
+                                className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                              >
+                                <option value={Category.DAIRY}>Dairy</option>
+                                <option value={Category.MEAT}>Meat</option>
+                                <option value={Category.VEGETABLES}>Veggies</option>
+                                <option value={Category.FRUITS}>Fruits</option>
+                                <option value={Category.BAKERY}>Bakery</option>
+                                <option value={Category.FROZEN}>Frozen</option>
+                                <option value={Category.PANTRY}>Pantry</option>
+                                <option value={Category.BEVERAGES}>Drinks</option>
+                                <option value={Category.OTHER}>Other</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+                              <select
+                                value={item.foodType}
+                                onChange={(e) => updateItem(item.id, 'foodType', e.target.value)}
+                                className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                              >
+                                <option value="store-bought">Store</option>
+                                <option value="premade">Deli</option>
+                                <option value="leftover">Leftover</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  ) : (
+                    // Stage 2: Show shelf life with source as sticky note
+                    <div
+                      className="relative transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                      style={{ transform: `rotate(${rotation}deg)` }}
+                    >
+                      {/* Shadow */}
+                      <div className="absolute inset-0 bg-black/20 rounded-sm translate-y-2 translate-x-1" />
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                      <div>
-                        <span className="text-gray-500">Category:</span>
-                        <span className="ml-1 font-medium">{item.category}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Type:</span>
-                        <span className="ml-1 font-medium">{item.foodType}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Shelf Life:</span>
+                      {/* Magnet */}
+                      <div
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full z-10"
+                        style={{
+                          background: magnetColor,
+                          boxShadow: '0 3px 6px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+                        }}
+                      />
+
+                      {/* Sticky note */}
+                      <div className={`relative bg-gradient-to-br ${colorClass} rounded-sm p-4 shadow-lg`}>
+                        {/* Delete button */}
                         <button
-                          onClick={() => adjustShelfLife(item.id, -1)}
-                          className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs"
-                        >-</button>
-                        <span className="font-bold text-blue-600">{item.shelfLifeDays} days</span>
-                        <button
-                          onClick={() => adjustShelfLife(item.id, 1)}
-                          className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs"
-                        >+</button>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Expires:</span>
-                        <span className="ml-1 font-medium">{item.expiryDate}</span>
+                          onClick={() => removeItem(item.id)}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md"
+                          title="Remove item"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+
+                        <div className="space-y-3 pt-2">
+                          {/* Item name */}
+                          <div>
+                            <h3 className="font-bold text-slate-800 text-lg" style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}>
+                              {item.name}
+                            </h3>
+                            {item.modifier && (
+                              <p className="text-sm text-slate-600 mt-1">{item.modifier}</p>
+                            )}
+                          </div>
+
+                          {/* Badges */}
+                          <div className="flex gap-2 flex-wrap">
+                            {getSourceBadge(item.source)}
+                            {getConfidenceBadge(item.confidence)}
+                          </div>
+
+                          {/* Details */}
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-slate-600">Category:</span>
+                              <span className="font-medium text-slate-800">{item.category}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-600">Type:</span>
+                              <span className="font-medium text-slate-800">{item.foodType}</span>
+                            </div>
+                          </div>
+
+                          {/* Shelf Life Adjuster */}
+                          <div className="bg-white/50 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-slate-700">Shelf Life:</span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => adjustShelfLife(item.id, -1)}
+                                  className="w-6 h-6 rounded-full bg-slate-300 hover:bg-slate-400 flex items-center justify-center text-slate-700 font-bold transition-colors"
+                                >-</button>
+                                <span className="font-bold text-emerald-600 min-w-[60px] text-center">{item.shelfLifeDays} days</span>
+                                <button
+                                  onClick={() => adjustShelfLife(item.id, 1)}
+                                  className="w-6 h-6 rounded-full bg-slate-300 hover:bg-slate-400 flex items-center justify-center text-slate-700 font-bold transition-colors"
+                                >+</button>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-600">Expires:</span>
+                              <span className="font-medium text-slate-800">{item.expiryDate}</span>
+                            </div>
+                          </div>
+
+                          {/* Storage recommendations */}
+                          {item.storageRecommendations && (
+                            <div className="text-xs text-slate-700 bg-amber-50 border-l-2 border-amber-400 p-2 rounded">
+                              💡 {item.storageRecommendations}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    {item.storageRecommendations && (
-                      <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                        💡 {item.storageRecommendations}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
 
             {items.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No items to review.
+              <div className="col-span-full text-center py-12">
+                <div className="relative inline-block" style={{ transform: 'rotate(-1deg)' }}>
+                  <div
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full"
+                    style={{
+                      background: 'radial-gradient(circle at 30% 30%, #9ca3af 0%, #6b7280 50%, #4b5563 100%)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    }}
+                  />
+                  <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-slate-50 rounded-sm px-6 py-4 shadow-md">
+                    <p className="text-slate-500">No items to review</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-6 border-t">
+        <div className="relative z-10 flex gap-3 p-6 pt-4 border-t border-slate-500/50 bg-slate-600/30">
           {stage === 1 ? (
             <>
               {onAddMoreItems && (
                 <button
                   onClick={() => onAddMoreItems(items)}
-                  className="px-4 bg-emerald-600 text-white py-2 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors flex items-center gap-2"
+                  className="px-5 py-3 bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur-sm text-white rounded-lg shadow-lg transition-all flex items-center gap-2 font-medium hover:shadow-emerald-500/30 hover:shadow-xl interactive"
                   title="Add more items to this batch"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add More
@@ -489,20 +670,30 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               <button
                 onClick={handleGetShelfLife}
                 disabled={items.length === 0 || isLoadingShelfLife}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 font-semibold"
               >
                 {isLoadingShelfLife ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Looking up shelf life...
-                  </>
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span className="font-semibold">Looking up shelf life data...</span>
+                    </div>
+                    <div className="text-xs opacity-90 text-center max-w-md">
+                      This typically takes less than a minute
+                    </div>
+                    {foodFacts.length > 0 && (
+                      <div className="mt-2 text-sm opacity-95 text-center max-w-lg px-4 animate-fade-in">
+                        <span className="font-medium">💡 Did you know?</span> {foodFacts[currentFactIndex]}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <>
                     Get Shelf Life ({items.length})
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </>
@@ -510,7 +701,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               </button>
               <button
                 onClick={onCancel}
-                className="px-6 bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                className="px-6 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium hover:shadow-xl"
               >
                 Cancel
               </button>
@@ -519,9 +710,9 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
             <>
               <button
                 onClick={() => setStage(1)}
-                className="px-4 bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors flex items-center gap-2"
+                className="px-5 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all flex items-center gap-2 font-medium"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Back
@@ -529,13 +720,13 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel, on
               <button
                 onClick={handleConfirm}
                 disabled={items.length === 0}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-6 rounded-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
               >
                 Add to Fridge ({items.length})
               </button>
               <button
                 onClick={onCancel}
-                className="px-6 bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                className="px-6 py-3 bg-slate-700/80 hover:bg-slate-600/80 backdrop-blur-sm text-slate-200 rounded-lg border border-slate-600/50 shadow-lg transition-all font-medium"
               >
                 Cancel
               </button>

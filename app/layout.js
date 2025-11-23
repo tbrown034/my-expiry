@@ -23,10 +23,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${caveat.variable} font-sans antialiased h-screen flex flex-col bg-slate-900 overflow-hidden`}
+        className={`${inter.variable} ${caveat.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-900`}
       >
         <Header />
-        <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
+        <main className="flex-1 flex flex-col overflow-y-auto">{children}</main>
         <Footer />
       </body>
     </html>

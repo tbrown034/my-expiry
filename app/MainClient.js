@@ -536,6 +536,7 @@ export default function MainClient() {
               onSubmit={handleTypeItemsSubmit}
               onBack={() => setCurrentView('add')}
               initialItems={pendingBatchItems}
+              isLoading={isLoadingShelfLife}
             />
           </motion.div>
         )}
