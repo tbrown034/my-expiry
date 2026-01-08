@@ -113,3 +113,4 @@ A Next.js application for tracking grocery items and reducing food waste.
 **Outcome**: ✅/❌ [Brief result description]
 
 ---
+
