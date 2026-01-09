@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
+    "@heroicons/react": "^2.2.0",
+    "gsap": "^3.14.2",
     "motion": "^12.23.24",
     "next": "^15.4.8",
     "react": "^19.1.2",

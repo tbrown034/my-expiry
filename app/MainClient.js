@@ -1,68 +1,128 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import { getUserFriendlyMessage } from '../lib/errorHandling';
-import FridgeDoor from './components/FridgeDoor';
-import FoodInventory from './components/FoodInventory';
-import AddGroceryForm from './components/AddGroceryForm';
-import BatchAddGroceryForm from './components/BatchAddGroceryForm';
-import ReceiptUpload from './components/ReceiptUpload';
-import GroceryItemPopup from './components/GroceryItemPopup';
-import DocumentAnalysisPopup from './components/DocumentAnalysisPopup';
-import BatchGroceryPopup from './components/BatchGroceryPopup';
-import GroceryAnalysisPopup from './components/GroceryAnalysisPopup';
-import EditGroceryModal from './components/EditGroceryModal';
-import GroceryDetailModal from './components/GroceryDetailModal';
-import HomePage from './components/HomePage';
-import AddToFridgePage from './components/AddToFridgePage';
-import TypeItemsPage from './components/TypeItemsPage';
-import LandingPage from './components/LandingPage';
-import Toast from './components/Toast';
-import FunAlert from './components/FunAlert';
-import Modal from './components/Modal';
-import ConfirmationModal from './components/ConfirmationModal';
+// Pages
+import FridgeDoor from './components/pages/FridgeDoor';
+import HomePage from './components/pages/HomePage';
+import AddToFridgePage from './components/pages/AddToFridgePage';
+import TypeItemsPage from './components/pages/TypeItemsPage';
+// Forms
+import AddGroceryForm from './components/forms/AddGroceryForm';
+import BatchAddGroceryForm from './components/forms/BatchAddGroceryForm';
+import ReceiptUpload from './components/forms/ReceiptUpload';
+// Modals
+import Modal from './components/modals/Modal';
+import ConfirmationModal from './components/modals/ConfirmationModal';
+import GroceryItemPopup from './components/modals/GroceryItemPopup';
+import DocumentAnalysisPopup from './components/modals/DocumentAnalysisPopup';
+import BatchGroceryPopup from './components/modals/BatchGroceryPopup';
+import EditGroceryModal from './components/modals/EditGroceryModal';
+import GroceryDetailModal from './components/modals/GroceryDetailModal';
+// UI
+import Toast from './components/ui/Toast';
+import ProcessingOverlay from './components/ui/ProcessingOverlay';
 import { motion, AnimatePresence } from 'motion/react';
 import { variants } from '../lib/motionVariants';
 import { storage } from '../lib/storage';
-import { calculateDaysUntilExpiry, getExpiryStatus, sortGroceries, getCategoryColorClass } from '../lib/utils';
+import { calculateDaysUntilExpiry, getExpiryStatus } from '../lib/utils';
+import { getRandomTestItems } from '../lib/testData';
+
+// Modal types for consolidated modal state
+const MODAL_TYPES = {
+  NONE: null,
+  ADD_FORM: 'addForm',
+  BATCH_FORM: 'batchForm',
+  DOCUMENT_UPLOAD: 'documentUpload',
+  GROCERY_POPUP: 'groceryPopup',
+  BATCH_POPUP: 'batchPopup',
+  DOCUMENT_POPUP: 'documentPopup',
+  EDIT: 'edit',
+  DETAIL: 'detail',
+  CLEAR_CONFIRM: 'clearConfirm',
+};
+
+// Reducer for modal state management
+function modalReducer(state, action) {
+  switch (action.type) {
+    case 'OPEN':
+      return { type: action.modal, data: action.data || null };
+    case 'CLOSE':
+      return { type: MODAL_TYPES.NONE, data: null };
+    default:
+      return state;
+  }
+}
 
 export default function MainClient() {
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'add', 'fridge'
+  // Core navigation state
+  const [currentView, setCurrentView] = useState('home');
   const [previousView, setPreviousView] = useState(null);
+
+  // Data state
   const [groceries, setGroceries] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showBatchForm, setShowBatchForm] = useState(false);
-  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
-  const [showGroceryPopup, setShowGroceryPopup] = useState(false);
-  const [showBatchPopup, setShowBatchPopup] = useState(false);
-  const [showDocumentPopup, setShowDocumentPopup] = useState(false);
-  const [pendingGroceryItem, setPendingGroceryItem] = useState(null);
-  const [batchShelfLifeResult, setBatchShelfLifeResult] = useState(null);
-  const [pendingBatchItems, setPendingBatchItems] = useState(null); // For "add more items" flow
-  const [documentAnalysisResult, setDocumentAnalysisResult] = useState(null);
-  const [isLoadingShelfLife, setIsLoadingShelfLife] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [showAnalysisPopup, setShowAnalysisPopup] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingGrocery, setEditingGrocery] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailGrocery, setDetailGrocery] = useState(null);
-  const [showLanding, setShowLanding] = useState(false);
+
+  // Consolidated modal state (replaces 10+ individual modal states)
+  const [modal, dispatchModal] = useReducer(modalReducer, { type: MODAL_TYPES.NONE, data: null });
+
+  // Pending data for multi-step flows
+  const [pendingData, setPendingData] = useState({
+    groceryItem: null,
+    batchResult: null,
+    batchItems: null,
+    documentResult: null,
+  });
+
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false);
+
+  // UI feedback state
   const [toast, setToast] = useState({ message: '', type: 'info', isVisible: false });
-  const [funAlert, setFunAlert] = useState({ isOpen: false, type: 'construction' });
-  const [easterEggClicks, setEasterEggClicks] = useState(0);
-  const [showEasterEgg, setShowEasterEgg] = useState(false);
-  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+
+  // Processing overlay state (for dev testing)
+  const [processing, setProcessing] = useState({
+    isVisible: false,
+    logs: [],
+    currentStep: ''
+  });
+
+  const addProcessingLog = useCallback((message, type = 'info') => {
+    const time = new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      fractionalSecondDigits: 3
+    }).slice(0, 12);
+    setProcessing(prev => ({
+      ...prev,
+      logs: [...prev.logs, { time, message, type }]
+    }));
+  }, []);
+
+  const setProcessingStep = useCallback((step) => {
+    setProcessing(prev => ({ ...prev, currentStep: step }));
+  }, []);
 
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type, isVisible: true });
   }, []);
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     setToast(prev => ({ ...prev, isVisible: false }));
-  };
+  }, []);
 
+  // Helper to open modals
+  const openModal = useCallback((modalType, data = null) => {
+    dispatchModal({ type: 'OPEN', modal: modalType, data });
+  }, []);
+
+  // Helper to close modals
+  const closeModal = useCallback(() => {
+    dispatchModal({ type: 'CLOSE' });
+  }, []);
+
+  // Load groceries on mount with proper error handling
   useEffect(() => {
     const loadGroceries = () => {
       try {
@@ -73,8 +133,7 @@ export default function MainClient() {
           status: getExpiryStatus(calculateDaysUntilExpiry(grocery.expiryDate))
         }));
         setGroceries(updated);
-      } catch (error) {
-        console.error('Error loading groceries:', error);
+      } catch {
         showToast('Failed to load groceries', 'error');
       }
     };
@@ -84,7 +143,7 @@ export default function MainClient() {
     return () => clearInterval(interval);
   }, [showToast]);
 
-  const handleAddGrocery = (newGrocery) => {
+  const handleAddGrocery = useCallback((newGrocery) => {
     try {
       const grocery = storage.addGrocery({
         ...newGrocery,
@@ -92,29 +151,27 @@ export default function MainClient() {
         status: getExpiryStatus(calculateDaysUntilExpiry(newGrocery.expiryDate))
       });
       setGroceries(prev => [...prev, grocery]);
-      setShowAddForm(false);
+      closeModal();
       showToast('Grocery item added successfully!', 'success');
-    } catch (error) {
-      console.error('Error adding grocery:', error);
+    } catch {
       showToast('Failed to add grocery item. Please try again.', 'error');
     }
-  };
+  }, [closeModal, showToast]);
 
   const handleDeleteGrocery = useCallback((id) => {
     try {
       storage.deleteGrocery(id);
       setGroceries(prev => prev.filter(g => g.id !== id));
       showToast('Grocery item deleted successfully', 'success');
-    } catch (error) {
-      console.error('Error deleting grocery:', error);
+    } catch {
       showToast('Failed to delete grocery item. Please try again.', 'error');
     }
   }, [showToast]);
 
-  const handleAddGroceryWithAI = async (itemName) => {
+  const handleAddGroceryWithAI = useCallback(async (itemName) => {
     if (!itemName.trim()) return;
-    
-    setIsLoadingShelfLife(true);
+
+    setIsLoading(true);
     try {
       const response = await fetch('/api/get-shelf-life', {
         method: 'POST',
@@ -123,46 +180,46 @@ export default function MainClient() {
       });
 
       if (!response.ok) throw new Error('Failed to get shelf life');
-      
+
       const shelfLifeData = await response.json();
-      setPendingGroceryItem(shelfLifeData);
-      setShowGroceryPopup(true);
-      setShowAddForm(false);
-    } catch (error) {
-      console.error('Error getting shelf life:', error);
+      setPendingData(prev => ({ ...prev, groceryItem: shelfLifeData }));
+      openModal(MODAL_TYPES.GROCERY_POPUP);
+    } catch {
       showToast('Could not get shelf life information. Please try again.', 'error');
     } finally {
-      setIsLoadingShelfLife(false);
+      setIsLoading(false);
     }
-  };
+  }, [openModal, showToast]);
 
-  const handleConfirmGroceryItem = (groceryData) => {
-    const batchMetadata = {
-      source: 'manual',
-      batchId: Date.now().toString(),
-      addedAt: new Date().toISOString()
-    };
+  const handleConfirmGroceryItem = useCallback((groceryData) => {
+    try {
+      const batchMetadata = {
+        source: 'manual',
+        batchId: Date.now().toString(),
+        addedAt: new Date().toISOString()
+      };
 
-    const grocery = storage.addGrocery({
-      ...groceryData,
-      batchMetadata,
-      daysUntilExpiry: calculateDaysUntilExpiry(groceryData.expiryDate),
-      status: getExpiryStatus(calculateDaysUntilExpiry(groceryData.expiryDate))
-    });
-    setGroceries(prev => [...prev, grocery]);
-    setShowGroceryPopup(false);
-    setPendingGroceryItem(null);
-    setShowAddForm(false);
-    showToast('Item added! Viewing your fridge...', 'success');
-    setCurrentView('fridge');
-  };
+      const grocery = storage.addGrocery({
+        ...groceryData,
+        batchMetadata,
+        daysUntilExpiry: calculateDaysUntilExpiry(groceryData.expiryDate),
+        status: getExpiryStatus(calculateDaysUntilExpiry(groceryData.expiryDate))
+      });
+      setGroceries(prev => [...prev, grocery]);
+      closeModal();
+      setPendingData(prev => ({ ...prev, groceryItem: null }));
+      showToast('Item added! Viewing your fridge...', 'success');
+      setCurrentView('fridge');
+    } catch {
+      showToast('Failed to add item. Please try again.', 'error');
+    }
+  }, [closeModal, showToast]);
 
-  const handleBatchAddGrocery = async (itemNames) => {
+  const handleBatchAddGrocery = useCallback(async (itemNames) => {
     if (!itemNames || itemNames.length === 0) return;
 
-    setIsLoadingShelfLife(true);
+    setIsLoading(true);
     try {
-      // Stage 1: Parse items (interpret user input)
       const response = await fetch('/api/parse-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,233 +228,160 @@ export default function MainClient() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Parse items API error:', errorData);
-        const error = new Error(errorData.error || errorData.details || 'Failed to parse items');
-        throw error;
+        throw new Error(errorData.error || errorData.details || 'Failed to parse items');
       }
 
       const parseResult = await response.json();
 
       // If we have pending items from "Add More" flow, merge them
-      if (pendingBatchItems && pendingBatchItems.length > 0) {
+      if (pendingData.batchItems && pendingData.batchItems.length > 0) {
         const mergedItems = [
-          ...pendingBatchItems,
+          ...pendingData.batchItems,
           ...parseResult.items.map((item, index) => ({
             ...item,
-            id: pendingBatchItems.length + index // Ensure unique IDs
+            id: pendingData.batchItems.length + index
           }))
         ];
-        setBatchShelfLifeResult({ ...parseResult, items: mergedItems });
-        setPendingBatchItems(null); // Clear pending items
+        setPendingData(prev => ({ ...prev, batchResult: { ...parseResult, items: mergedItems }, batchItems: null }));
       } else {
-        setBatchShelfLifeResult(parseResult); // Contains parsed items without shelf life
+        setPendingData(prev => ({ ...prev, batchResult: parseResult }));
       }
 
-      setShowBatchPopup(true);
-      setShowBatchForm(false);
+      openModal(MODAL_TYPES.BATCH_POPUP);
     } catch (error) {
-      console.error('❌ Error parsing items:', error);
       const userMessage = getUserFriendlyMessage(error, 'parse-items');
       showToast(userMessage, 'error');
     } finally {
-      setIsLoadingShelfLife(false);
+      setIsLoading(false);
     }
-  };
+  }, [pendingData.batchItems, openModal, showToast]);
 
-  const handleAddMoreItems = (currentItems) => {
-    // Store current items and navigate back to type page
-    setPendingBatchItems(currentItems);
-    setShowBatchPopup(false);
-    setBatchShelfLifeResult(null);
-    // User is already on 'type' view, so they'll see the TypeItemsPage again
-  };
-
-  const handleTypeItemsSubmit = async (itemNames) => {
-    // Handle submission from TypeItemsPage by calling batch add
+  const handleTypeItemsSubmit = useCallback(async (itemNames) => {
     await handleBatchAddGrocery(itemNames);
-  };
+  }, [handleBatchAddGrocery]);
 
-  const handleConfirmBatchItems = (itemsToAdd) => {
-    const batchId = Date.now().toString();
-    const batchMetadata = {
-      source: 'manual',
-      batchId,
-      addedAt: new Date().toISOString()
-    };
-
-    const addedItems = itemsToAdd.map(item => {
-      const grocery = storage.addGrocery({
-        ...item,
-        batchMetadata,
-        daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
-        status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
-      });
-      return grocery;
-    });
-
-    setGroceries(prev => [...prev, ...addedItems]);
-    setShowBatchPopup(false);
-    setBatchShelfLifeResult(null);
-    setShowBatchForm(false);
-    showToast(`${addedItems.length} items added! Viewing your fridge...`, 'success');
-    setCurrentView('fridge');
-  };
-
-  const handleReceiptAnalyzed = (analysisResult) => {
-    setDocumentAnalysisResult(analysisResult);
-    setShowDocumentPopup(true);
-    setShowDocumentUpload(false);
-  };
-
-  const handleConfirmDocumentItems = (itemsToAdd) => {
-    const batchId = Date.now().toString();
-    const batchMetadata = {
-      source: 'receipt',
-      storeName: documentAnalysisResult?.storeName || null,
-      batchId,
-      addedAt: new Date().toISOString()
-    };
-
-    const addedItems = itemsToAdd.map(item => {
-      const grocery = storage.addGrocery({
-        ...item,
-        batchMetadata,
-        daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
-        status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
-      });
-      return grocery;
-    });
-
-    setGroceries(prev => [...prev, ...addedItems]);
-    setShowDocumentPopup(false);
-    setDocumentAnalysisResult(null);
-    setShowDocumentUpload(false);
-    showToast(`${addedItems.length} items added from receipt! Viewing your fridge...`, 'success');
-    setCurrentView('fridge');
-  };
-
-  const handleGetFreshnessInfo = async () => {
-    if (groceries.length === 0) {
-      showToast('No groceries to analyze', 'warning');
-      return;
-    }
-
-    setIsAnalyzing(true);
+  const handleConfirmBatchItems = useCallback((itemsToAdd) => {
     try {
-      const response = await fetch('/api/get-freshness-info', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groceries })
+      const batchId = Date.now().toString();
+      const batchMetadata = {
+        source: 'manual',
+        batchId,
+        addedAt: new Date().toISOString()
+      };
+
+      const addedItems = itemsToAdd.map(item => {
+        return storage.addGrocery({
+          ...item,
+          batchMetadata,
+          daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
+          status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
+        });
       });
 
-      if (!response.ok) throw new Error('Failed to get freshness information');
-      
-      const result = await response.json();
-      setAnalysisResult(result);
-      setShowAnalysisPopup(true);
-      showToast('Freshness information retrieved successfully!', 'success');
-    } catch (error) {
-      console.error('Error getting freshness information:', error);
-      showToast('Could not get freshness information. Please try again.', 'error');
-    } finally {
-      setIsAnalyzing(false);
+      setGroceries(prev => [...prev, ...addedItems]);
+      closeModal();
+      setPendingData(prev => ({ ...prev, batchResult: null }));
+      showToast(`${addedItems.length} items added! Viewing your fridge...`, 'success');
+      setCurrentView('fridge');
+    } catch {
+      showToast('Failed to add items. Please try again.', 'error');
     }
-  };
+  }, [closeModal, showToast]);
 
-  const handleClearAll = () => {
-    setShowClearAllConfirm(true);
-  };
+  const handleReceiptAnalyzed = useCallback((result) => {
+    setPendingData(prev => ({ ...prev, documentResult: result }));
+    openModal(MODAL_TYPES.DOCUMENT_POPUP);
+  }, [openModal]);
 
-  const handleConfirmClearAll = () => {
+  const handleConfirmDocumentItems = useCallback((itemsToAdd) => {
+    try {
+      const batchId = Date.now().toString();
+      const batchMetadata = {
+        source: 'receipt',
+        storeName: pendingData.documentResult?.storeName || null,
+        batchId,
+        addedAt: new Date().toISOString()
+      };
+
+      const addedItems = itemsToAdd.map(item => {
+        return storage.addGrocery({
+          ...item,
+          batchMetadata,
+          daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
+          status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
+        });
+      });
+
+      setGroceries(prev => [...prev, ...addedItems]);
+      closeModal();
+      setPendingData(prev => ({ ...prev, documentResult: null }));
+      showToast(`${addedItems.length} items added from receipt! Viewing your fridge...`, 'success');
+      setCurrentView('fridge');
+    } catch {
+      showToast('Failed to add items. Please try again.', 'error');
+    }
+  }, [pendingData.documentResult, closeModal, showToast]);
+
+  const handleClearAll = useCallback(() => {
+    openModal(MODAL_TYPES.CLEAR_CONFIRM);
+  }, [openModal]);
+
+  const handleConfirmClearAll = useCallback(() => {
     try {
       storage.clearAllGroceries();
       setGroceries([]);
+      closeModal();
       showToast('All groceries cleared successfully', 'success');
-    } catch (error) {
-      console.error('Error clearing groceries:', error);
+    } catch {
       showToast('Failed to clear groceries. Please try again.', 'error');
     }
-  };
+  }, [closeModal, showToast]);
 
   const handleEditGrocery = useCallback((id) => {
     const grocery = groceries.find(g => g.id === id);
     if (grocery) {
-      setEditingGrocery(grocery);
-      setShowEditModal(true);
+      openModal(MODAL_TYPES.EDIT, grocery);
     }
-  }, [groceries]);
+  }, [groceries, openModal]);
 
-  const handleSaveEditedGrocery = (updatedData) => {
+  const handleSaveEditedGrocery = useCallback((updatedData) => {
     try {
       const updatedGrocery = {
         ...updatedData,
         daysUntilExpiry: calculateDaysUntilExpiry(updatedData.expiryDate),
         status: getExpiryStatus(calculateDaysUntilExpiry(updatedData.expiryDate))
       };
-      
-      const saved = storage.updateGrocery(editingGrocery.id, updatedGrocery);
+
+      const saved = storage.updateGrocery(modal.data.id, updatedGrocery);
       if (saved) {
-        setGroceries(prev => 
-          prev.map(g => g.id === editingGrocery.id ? saved : g)
+        setGroceries(prev =>
+          prev.map(g => g.id === modal.data.id ? saved : g)
         );
-        setShowEditModal(false);
-        setEditingGrocery(null);
+        closeModal();
         showToast('Grocery item updated successfully!', 'success');
       }
-    } catch (error) {
-      console.error('Error updating grocery:', error);
+    } catch {
       showToast('Failed to update grocery item. Please try again.', 'error');
     }
-  };
-
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    setEditingGrocery(null);
-  };
+  }, [modal.data, closeModal, showToast]);
 
   const handleShowDetail = useCallback((id) => {
     const grocery = groceries.find(g => g.id === id);
     if (grocery) {
-      setDetailGrocery(grocery);
-      setShowDetailModal(true);
+      openModal(MODAL_TYPES.DETAIL, grocery);
     }
-  }, [groceries]);
+  }, [groceries, openModal]);
 
-  const handleCloseDetail = () => {
-    setShowDetailModal(false);
-    setDetailGrocery(null);
-  };
-
-  const handleStartTracking = (quickAnswerItem = null) => {
-    // Always go to tracking functionality
+  const handleStartTracking = useCallback((quickAnswerItem = null) => {
     if (quickAnswerItem) {
-      // Store the quick answer item in localStorage for the tracking page
-      localStorage.setItem('quickAnswerItem', JSON.stringify(quickAnswerItem));
+      try {
+        localStorage.setItem('quickAnswerItem', JSON.stringify(quickAnswerItem));
+      } catch {
+        // localStorage may be unavailable, continue anyway
+      }
     }
     window.location.href = '/tracking';
-  };
-
-
-  const showFunAlert = (type = 'construction') => {
-    setFunAlert({ isOpen: true, type });
-  };
-
-  const closeFunAlert = () => {
-    setFunAlert({ isOpen: false, type: 'construction' });
-  };
-
-  const handleLogoClick = () => {
-    setEasterEggClicks(prev => {
-      const newCount = prev + 1;
-      if (newCount === 5) {
-        setShowEasterEgg(true);
-        showToast('🎉 You found the secret! Enjoy the rainbow mode! 🌈', 'success');
-        setTimeout(() => setShowEasterEgg(false), 10000); // Hide after 10 seconds
-        return 0; // Reset counter
-      }
-      return newCount;
-    });
-  };
+  }, []);
 
   const handleMarkAsEaten = useCallback((id) => {
     try {
@@ -408,8 +392,7 @@ export default function MainClient() {
         );
         showToast('Marked as eaten! 🎉', 'success');
       }
-    } catch (error) {
-      console.error('Error marking as eaten:', error);
+    } catch {
       showToast('Failed to mark item as eaten', 'error');
     }
   }, [showToast]);
@@ -423,8 +406,7 @@ export default function MainClient() {
         );
         showToast('Marked as expired', 'warning');
       }
-    } catch (error) {
-      console.error('Error marking as expired:', error);
+    } catch {
       showToast('Failed to mark item as expired', 'error');
     }
   }, [showToast]);
@@ -434,129 +416,169 @@ export default function MainClient() {
       storage.deleteByPurchaseDate(purchaseDate);
       setGroceries(prev => prev.filter(g => g.purchaseDate !== purchaseDate));
       showToast('Shopping trip deleted', 'success');
-    } catch (error) {
-      console.error('Error deleting note:', error);
+    } catch {
       showToast('Failed to delete shopping trip', 'error');
     }
   }, [showToast]);
 
   const handleItemClick = useCallback((item) => {
-    setDetailGrocery(item);
-    setShowDetailModal(true);
-  }, []);
+    openModal(MODAL_TYPES.DETAIL, item);
+  }, [openModal]);
 
-  const handleAddShoppingTrip = () => {
+  const handleAddShoppingTrip = useCallback(() => {
     setPreviousView(currentView);
     setCurrentView('add');
-  };
+  }, [currentView]);
 
-  const handleNavigate = (view) => {
+  const handleNavigate = useCallback((view) => {
     setPreviousView(currentView);
     setCurrentView(view);
-  };
+  }, [currentView]);
 
-  const handleSelectAddMethod = (method) => {
+  const handleTestBatch = useCallback(async () => {
+    // Reset and show processing overlay
+    setProcessing({ isVisible: true, logs: [], currentStep: '' });
+    setCurrentView('fridge');
+
+    const testItems = getRandomTestItems();
+    addProcessingLog(`Generated ${testItems.length} random test items`, 'success');
+    addProcessingLog(`Items: ${testItems.slice(0, 3).join(', ')}${testItems.length > 3 ? '...' : ''}`, 'info');
+
+    setProcessingStep('Parsing items with AI...');
+    addProcessingLog('POST /api/parse-items', 'network');
+
+    setIsLoading(true);
+    const startTime = Date.now();
+
+    try {
+      const response = await fetch('/api/parse-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: testItems })
+      });
+
+      const elapsed = Date.now() - startTime;
+      addProcessingLog(`Response received (${elapsed}ms)`, 'network');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.details || 'Failed to parse items');
+      }
+
+      const parseResult = await response.json();
+      addProcessingLog(`Parsed ${parseResult.items?.length || 0} items successfully`, 'success');
+
+      setProcessingStep('Fetching shelf life data...');
+      addProcessingLog('POST /api/get-shelf-life (batch)', 'network');
+
+      // The BatchGroceryPopup will fetch shelf life, but we can show the popup now
+      setPendingData(prev => ({ ...prev, batchResult: parseResult }));
+
+      addProcessingLog('Processing complete!', 'success');
+      setProcessingStep('Done!');
+
+      // Small delay to show completion, then show popup
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setProcessing(prev => ({ ...prev, isVisible: false }));
+      openModal(MODAL_TYPES.BATCH_POPUP);
+
+    } catch (error) {
+      addProcessingLog(`Error: ${error.message}`, 'error');
+      setProcessingStep('Failed');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setProcessing(prev => ({ ...prev, isVisible: false }));
+      const userMessage = getUserFriendlyMessage(error, 'parse-items');
+      showToast(userMessage, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addProcessingLog, setProcessingStep, openModal, showToast]);
+
+  const handleSelectAddMethod = useCallback((method) => {
     if (method === 'single') {
-      setShowAddForm(true);
+      openModal(MODAL_TYPES.ADD_FORM);
     } else if (method === 'manual') {
       setCurrentView('type');
     } else if (method === 'batch') {
-      setShowBatchForm(true);
+      openModal(MODAL_TYPES.BATCH_FORM);
     } else if (method === 'receipt') {
-      setShowDocumentUpload(true);
+      openModal(MODAL_TYPES.DOCUMENT_UPLOAD);
+    } else if (method === 'testBatch') {
+      handleTestBatch();
     }
-  };
+  }, [openModal, handleTestBatch]);
 
-  const handleBackToHome = () => {
+  const handleBackToHome = useCallback(() => {
     setCurrentView('home');
-  };
+  }, []);
 
-  const handleBackToAdd = () => {
-    setCurrentView('add');
-  };
-
-  const handleBackFromAdd = () => {
+  const handleBackFromAdd = useCallback(() => {
     if (previousView) {
       setCurrentView(previousView);
       setPreviousView(null);
     } else {
       setCurrentView('home');
     }
-  };
-
-  if (showLanding) {
-    return (
-      <>
-        <LandingPage
-          onStartTracking={handleStartTracking}
-        />
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={hideToast}
-        />
-      </>
-    );
-  }
+  }, [previousView]);
 
   // Render different views with page transitions
   return (
     <>
-      <AnimatePresence mode="wait">
-        {currentView === 'home' && (
-          <motion.div
-            key="home"
-            variants={variants.fridgeSlide}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <HomePage onNavigate={handleNavigate} />
-          </motion.div>
-        )}
+      <div className="overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          {currentView === 'home' && (
+            <motion.div
+              key="home"
+              variants={variants.fridgeSlide}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <HomePage onNavigate={handleNavigate} />
+            </motion.div>
+          )}
 
-        {currentView === 'add' && (
-          <motion.div
-            key="add"
-            variants={variants.fridgeSlide}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <AddToFridgePage
-              onSelectMethod={handleSelectAddMethod}
-              onBack={handleBackFromAdd}
-            />
-          </motion.div>
-        )}
+          {currentView === 'add' && (
+            <motion.div
+              key="add"
+              variants={variants.fridgeSlide}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <AddToFridgePage
+                onSelectMethod={handleSelectAddMethod}
+                onBack={handleBackFromAdd}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'type' && (
-          <motion.div
-            key="type"
-            variants={variants.fridgeSlide}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <TypeItemsPage
-              onSubmit={handleTypeItemsSubmit}
-              onBack={() => setCurrentView('add')}
-              initialItems={pendingBatchItems}
-              isLoading={isLoadingShelfLife}
-            />
-          </motion.div>
-        )}
+          {currentView === 'type' && (
+            <motion.div
+              key="type"
+              variants={variants.fridgeSlide}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <TypeItemsPage
+                onSubmit={handleTypeItemsSubmit}
+                onBack={() => setCurrentView('add')}
+                initialItems={pendingData.batchItems}
+                isLoading={isLoading}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'fridge' && (
-          <motion.div
-            key="fridge"
-            variants={variants.fridgeSlide}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <FridgeDoor
+          {currentView === 'fridge' && (
+            <motion.div
+              key="fridge"
+              variants={variants.fridgeSlide}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <FridgeDoor
                 groceries={groceries}
                 onItemClick={handleItemClick}
                 onMarkAsEaten={handleMarkAsEaten}
@@ -565,130 +587,130 @@ export default function MainClient() {
                 onEditItem={handleEditGrocery}
                 onDeleteItem={handleDeleteGrocery}
                 onAddShoppingTrip={handleAddShoppingTrip}
+                onClearAll={handleClearAll}
                 onBack={handleBackToHome}
               />
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* Toast - always visible */}
+      {/* Toast notification */}
       <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={hideToast}
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+
+      {/* Processing overlay for dev testing */}
+      <ProcessingOverlay
+        isVisible={processing.isVisible}
+        logs={processing.logs}
+        currentStep={processing.currentStep}
+      />
+
+      {/* Add Forms - Using Reusable Modal Component */}
+      <Modal
+        isOpen={modal.type === MODAL_TYPES.ADD_FORM}
+        onClose={closeModal}
+        title="Add New Grocery"
+        size="md"
+      >
+        <AddGroceryForm
+          onSubmit={handleAddGrocery}
+          onSubmitWithAI={handleAddGroceryWithAI}
+          onCancel={closeModal}
+          isLoadingShelfLife={isLoading}
         />
+      </Modal>
 
-        {/* Add Forms - Using Reusable Modal Component */}
-        <Modal
-          isOpen={showAddForm}
-          onClose={() => setShowAddForm(false)}
-          title="Add New Grocery"
-          size="md"
-        >
-          <AddGroceryForm
-            onSubmit={handleAddGrocery}
-            onSubmitWithAI={handleAddGroceryWithAI}
-            onCancel={() => setShowAddForm(false)}
-            isLoadingShelfLife={isLoadingShelfLife}
-          />
-        </Modal>
-
-        <Modal
-          isOpen={showBatchForm}
-          onClose={() => setShowBatchForm(false)}
-          size="lg"
-        >
-          <BatchAddGroceryForm
-            onBatchSubmit={handleBatchAddGrocery}
-            onCancel={() => setShowBatchForm(false)}
-            isLoadingShelfLife={isLoadingShelfLife}
-          />
-        </Modal>
-
-        <Modal
-          isOpen={showDocumentUpload}
-          onClose={() => setShowDocumentUpload(false)}
-          title="Take a Photo of Receipt"
-          size="lg"
-        >
-          <ReceiptUpload
-            onReceiptAnalyzed={handleReceiptAnalyzed}
-            onClose={() => setShowDocumentUpload(false)}
-            showToast={showToast}
-          />
-        </Modal>
-
-        {showGroceryPopup && pendingGroceryItem && (
-          <GroceryItemPopup
-            item={pendingGroceryItem}
-            onConfirm={handleConfirmGroceryItem}
-            onCancel={() => {
-              setShowGroceryPopup(false);
-              setPendingGroceryItem(null);
-            }}
-          />
-        )}
-
-        {showBatchPopup && batchShelfLifeResult && (
-          <BatchGroceryPopup
-            batchResult={batchShelfLifeResult}
-            onConfirm={handleConfirmBatchItems}
-            onCancel={() => {
-              setShowBatchPopup(false);
-              setBatchShelfLifeResult(null);
-              setPendingBatchItems(null);
-            }}
-            onAddMoreItems={handleAddMoreItems}
-          />
-        )}
-
-        {showDocumentPopup && documentAnalysisResult && (
-          <DocumentAnalysisPopup
-            analysisResult={documentAnalysisResult}
-            onConfirm={handleConfirmDocumentItems}
-            onCancel={() => {
-              setShowDocumentPopup(false);
-              setDocumentAnalysisResult(null);
-            }}
-          />
-        )}
-
-        {/* Modals always available */}
-        {showEditModal && editingGrocery && (
-          <EditGroceryModal
-            grocery={editingGrocery}
-            onSave={handleSaveEditedGrocery}
-            onCancel={handleCancelEdit}
-          />
-        )}
-
-        {showDetailModal && detailGrocery && (
-          <GroceryDetailModal
-            grocery={detailGrocery}
-            isOpen={showDetailModal}
-            onEdit={handleEditGrocery}
-            onDelete={handleDeleteGrocery}
-            onClose={handleCloseDetail}
-          />
-        )}
-
-        <FunAlert
-          isOpen={funAlert.isOpen}
-          onClose={closeFunAlert}
-          type={funAlert.type}
+      <Modal
+        isOpen={modal.type === MODAL_TYPES.BATCH_FORM}
+        onClose={closeModal}
+        size="lg"
+      >
+        <BatchAddGroceryForm
+          onBatchSubmit={handleBatchAddGrocery}
+          onCancel={closeModal}
+          isLoadingShelfLife={isLoading}
         />
+      </Modal>
 
-        <ConfirmationModal
-          isOpen={showClearAllConfirm}
-          onClose={() => setShowClearAllConfirm(false)}
-          onConfirm={handleConfirmClearAll}
-          title="Delete All Groceries?"
-          message="Are you sure you want to delete all groceries? This action cannot be undone."
-          confirmText="Delete All"
-          cancelText="Cancel"
-          variant="danger"
+      <Modal
+        isOpen={modal.type === MODAL_TYPES.DOCUMENT_UPLOAD}
+        onClose={closeModal}
+        title="Take a Photo of Receipt"
+        size="lg"
+      >
+        <ReceiptUpload
+          onReceiptAnalyzed={handleReceiptAnalyzed}
+          onClose={closeModal}
+          showToast={showToast}
         />
-      </>
-    );
+      </Modal>
+
+      {modal.type === MODAL_TYPES.GROCERY_POPUP && pendingData.groceryItem && (
+        <GroceryItemPopup
+          item={pendingData.groceryItem}
+          onConfirm={handleConfirmGroceryItem}
+          onCancel={() => {
+            closeModal();
+            setPendingData(prev => ({ ...prev, groceryItem: null }));
+          }}
+        />
+      )}
+
+      {modal.type === MODAL_TYPES.BATCH_POPUP && pendingData.batchResult && (
+        <BatchGroceryPopup
+          batchResult={pendingData.batchResult}
+          onConfirm={handleConfirmBatchItems}
+          onCancel={() => {
+            closeModal();
+            setPendingData(prev => ({ ...prev, batchResult: null, batchItems: null }));
+          }}
+        />
+      )}
+
+      {modal.type === MODAL_TYPES.DOCUMENT_POPUP && pendingData.documentResult && (
+        <DocumentAnalysisPopup
+          analysisResult={pendingData.documentResult}
+          onConfirm={handleConfirmDocumentItems}
+          onCancel={() => {
+            closeModal();
+            setPendingData(prev => ({ ...prev, documentResult: null }));
+          }}
+        />
+      )}
+
+      {modal.type === MODAL_TYPES.EDIT && modal.data && (
+        <EditGroceryModal
+          grocery={modal.data}
+          onSave={handleSaveEditedGrocery}
+          onCancel={closeModal}
+        />
+      )}
+
+      {modal.type === MODAL_TYPES.DETAIL && modal.data && (
+        <GroceryDetailModal
+          grocery={modal.data}
+          isOpen={true}
+          onEdit={handleEditGrocery}
+          onDelete={handleDeleteGrocery}
+          onClose={closeModal}
+        />
+      )}
+
+      <ConfirmationModal
+        isOpen={modal.type === MODAL_TYPES.CLEAR_CONFIRM}
+        onClose={closeModal}
+        onConfirm={handleConfirmClearAll}
+        title="Delete All Groceries?"
+        message="Are you sure you want to delete all groceries? This action cannot be undone."
+        confirmText="Delete All"
+        cancelText="Cancel"
+        variant="danger"
+      />
+    </>
+  );
 }

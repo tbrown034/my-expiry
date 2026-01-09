@@ -1,11 +1,17 @@
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import { Inter, Caveat } from "next/font/google";
+import Header from "./components/layout/Header";
+import { DM_Serif_Display, DM_Sans, Caveat } from "next/font/google";
 
-const inter = Inter({
+const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: "400",
+  variable: "--font-display",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  weight: ["400", "500", "600", "700"],
 });
 
 const caveat = Caveat({
@@ -15,19 +21,19 @@ const caveat = Caveat({
 });
 
 export const metadata = {
-  title: "My Expiry",
-  description: "Smart grocery management to reduce food waste",
+  title: "Food Xpiry",
+  description: "Track groceries, reduce waste, save money",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${caveat.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-900`}
+        className={`${dmSerifDisplay.variable} ${dmSans.variable} ${caveat.variable} antialiased min-h-screen flex flex-col`}
+        style={{ backgroundColor: "var(--color-cream-100)" }}
       >
         <Header />
-        <main className="flex-1 flex flex-col overflow-y-auto">{children}</main>
-        <Footer />
+        <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
       </body>
     </html>
   );
