@@ -18,7 +18,7 @@ A Next.js application that helps reduce food waste by tracking grocery expiratio
 - **Framework**: Next.js 15 (App Router)
 - **Styling**: Tailwind CSS
 - **Animations**: GSAP + Framer Motion (motion/react)
-- **AI**: OpenAI API for shelf-life estimates and receipt parsing
+- **AI**: Anthropic Claude API for shelf-life estimates and receipt parsing
 - **Storage**: localStorage (client-side persistence)
 - **Deployment**: Vercel
 
@@ -28,7 +28,7 @@ A Next.js application that helps reduce food waste by tracking grocery expiratio
 
 - Node.js 18+
 - npm or yarn
-- OpenAI API key (for AI features)
+- Anthropic API key (for AI features)
 
 ### Installation
 
@@ -42,7 +42,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Add your OPENAI_API_KEY to .env.local
+# Add your ANTHROPIC_API_KEY to .env.local
 
 # Run development server
 npm run dev

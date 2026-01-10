@@ -2,7 +2,7 @@
 
 import { formatGroceryName, formatCategoryName, formatCountdown, calculateHoursUntilExpiry } from '../../../lib/utils';
 
-export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose, isOpen }) {
+export default function GroceryDetailModal({ grocery, onEdit, onDelete, onMarkAsEaten, onClose, isOpen }) {
   if (!grocery || !isOpen) return null;
 
   const hoursUntilExpiry = calculateHoursUntilExpiry(grocery.expiryDate);
@@ -88,7 +88,7 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose,
             <div className="space-y-4">
               {/* Item Name & Status */}
               <div className="text-center border-b-2 border-slate-300 pb-4">
-                <h3 className="text-2xl font-bold text-slate-800 mb-2" style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}>
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">
                   {formatGroceryName(grocery.name)}
                 </h3>
                 <div className="flex items-center justify-center gap-2">
@@ -104,13 +104,21 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose,
                 </div>
               </div>
 
-              {/* Countdown */}
-              <div className="text-center bg-white/50 rounded-lg p-4 border-2 border-slate-200">
-                <div className="text-3xl font-bold text-slate-800 mb-1" style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}>
+              {/* Freshness Display */}
+              <div className={`text-center rounded-lg p-4 border-2 ${
+                grocery.status === 'fresh' ? 'bg-green-50 border-green-200' :
+                grocery.status === 'expiring_soon' ? 'bg-amber-50 border-amber-200' :
+                'bg-red-50 border-red-200'
+              }`}>
+                <div className={`text-3xl font-bold mb-1 ${
+                  grocery.status === 'fresh' ? 'text-green-700' :
+                  grocery.status === 'expiring_soon' ? 'text-amber-700' :
+                  'text-red-700'
+                }`}>
                   {countdown}
                 </div>
                 <div className="text-sm text-slate-600">
-                  {hoursUntilExpiry >= 0 ? 'until expiry' : 'past expiry'}
+                  {hoursUntilExpiry >= 0 ? 'remains fresh' : 'past best-by date'}
                 </div>
               </div>
 
@@ -134,42 +142,72 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onClose,
                   </div>
                 )}
 
-                {grocery.source && (
-                  <div className="text-center text-xs text-slate-500">
-                    Data from {grocery.source}
-                    {grocery.confidence && ` • ${grocery.confidence} confidence`}
+                {/* Source & Info */}
+                <div className="bg-slate-100 rounded-lg p-3 border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-600 mb-2">ℹ️ Information Source</div>
+                  <div className="text-sm text-slate-700">
+                    {grocery.source ? (
+                      <span>Shelf life data from <span className="font-medium">{grocery.source}</span></span>
+                    ) : (
+                      <span>Based on USDA food safety guidelines</span>
+                    )}
                   </div>
-                )}
+                  {grocery.confidence && (
+                    <div className="text-xs text-slate-500 mt-1">
+                      Confidence: {grocery.confidence}
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-400 mt-2">
+                    Note: Actual freshness may vary based on storage conditions.
+                  </div>
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col gap-2 pt-2">
+                {/* Primary action - Mark as Eaten */}
                 <button
                   onClick={() => {
-                    onEdit(grocery.id);
+                    onMarkAsEaten?.(grocery.id);
                     onClose();
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                  aria-label="Edit item"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                  aria-label="Mark as eaten"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  Edit
+                  Mark as Eaten
                 </button>
-                <button
-                  onClick={() => {
-                    onDelete(grocery.id);
-                    onClose();
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                  aria-label="Delete item"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </button>
+
+                {/* Secondary actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      onEdit(grocery.id);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-all"
+                    aria-label="Edit item"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDelete(grocery.id);
+                      onClose();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-all"
+                    aria-label="Delete item"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           </div>

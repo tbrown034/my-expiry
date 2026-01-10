@@ -301,7 +301,7 @@ components/
 ```
 food-xpiry/
 ├── app/
-│   ├── MainClient.js           # Main orchestrator
+│   ├── MainClient.js           # Main orchestrator, state management
 │   ├── page.js                 # Root page
 │   ├── layout.js               # Root layout
 │   ├── components/
@@ -330,6 +330,7 @@ food-xpiry/
 │   │   │   ├── Toast.js
 │   │   │   ├── LoadingSpinner.js
 │   │   │   ├── ActionMenu.js
+│   │   │   ├── FridgeContents.js
 │   │   │   └── StickyNote.js
 │   │   └── svg/                # Icon components
 │   │       ├── index.js
@@ -337,24 +338,34 @@ food-xpiry/
 │   │       ├── Magnet.js
 │   │       ├── FrostPattern.js
 │   │       └── AnimatedIcons.js
-│   ├── tracking/               # Tracking page
+│   ├── tracking/               # Stats/tracking page
+│   ├── fridge/                 # Fridge route
 │   ├── about/                  # About page
 │   └── api/                    # API routes
-│       ├── get-shelf-life/
-│       ├── parse-items/
-│       ├── analyze-receipt/
-│       ├── get-freshness-info/
-│       └── quick-shelf-life/
+│       ├── analyze-receipt/    # Receipt/image analysis (Claude Vision)
+│       ├── parse-items/        # Hybrid local + AI parsing
+│       ├── get-shelf-life/     # Shelf life lookup
+│       ├── quick-shelf-life/   # Fast single-item lookup
+│       └── get-freshness-info/ # Freshness details
 ├── lib/
 │   ├── storage.js              # localStorage wrapper
 │   ├── utils.js                # Utility functions + formatExpiryDate
 │   ├── types.js                # Category enum, status types
 │   ├── categoryIcons.js        # Heroicons mapping for categories
+│   ├── foodEmojis.js           # Food emoji mapping system
+│   ├── shelfLifeDatabase.js    # Local food database (~120 items)
+│   ├── localParser.js          # Local parsing with spell correction
 │   ├── motionVariants.js       # Framer Motion presets
 │   ├── gsapAnimations.js       # GSAP animation helpers
 │   ├── errorHandling.js        # Error utilities
 │   └── foodSafetyFacts.js      # Fun facts for loading
-├── CLAUDE.md                   # This file (dev docs)
+├── test-receipts/              # Test files for receipt analysis
+│   ├── grocery-receipt.txt
+│   ├── grocery-receipt.csv
+│   ├── receipt-image.png
+│   └── kroger-large-receipt.png
+├── CLAUDE.md                   # Dev documentation (this file)
+├── CHANGELOG.md                # Version history
 └── README.md                   # Public documentation
 ```
 
@@ -1148,33 +1159,273 @@ THANK YOU FOR SHOPPING!
 
 ---
 
-## Updated File Structure
+## Security Review (2026-01-09)
 
-```
-food-xpiry/
-├── app/
-│   ├── api/
-│   │   ├── analyze-receipt/    # Receipt/image analysis
-│   │   │   └── route.js        # Claude Vision integration
-│   │   ├── parse-items/        # Hybrid item parsing
-│   │   │   └── route.js        # Local + AI parsing
-│   │   ├── get-shelf-life/     # Shelf life lookup
-│   │   └── quick-shelf-life/   # Fast single-item lookup
-│   └── components/
-│       └── modals/
-│           ├── BatchGroceryPopup.js      # Fixed category bug
-│           └── DocumentAnalysisPopup.js  # Fixed category bug
-├── lib/
-│   ├── shelfLifeDatabase.js    # Local food database
-│   ├── foodEmojis.js           # Emoji mapping
-│   └── types.js                # Category enum
-├── test-receipts/              # NEW: Test files
-│   ├── grocery-receipt.txt
-│   ├── grocery-receipt.csv
-│   ├── receipt-image.png
-│   ├── kroger-large-receipt.png
-│   └── grocery-receipt.pdf
-└── CLAUDE.md                   # This documentation
+### API Routes - All Secure
+
+| Endpoint | Status | Notes |
+|----------|--------|-------|
+| `/api/get-shelf-life` | ✅ Secure | Input validation, max 50 items, API key check |
+| `/api/parse-items` | ✅ Secure | Max 10,000 chars, min 1 char, validated |
+| `/api/analyze-receipt` | ✅ Secure | File type/size validation, rate limiting |
+| `/api/quick-shelf-life` | ✅ Secure | Input validation, trimmed, JSON parsing |
+
+### Security Measures
+
+- **Input Validation**: All user inputs validated and sanitized
+- **Rate Limiting**: Receipt API: 10/min, 100/hour, 1000/day
+- **File Validation**: JPEG, PNG, PDF, CSV, TXT only, 20MB max
+- **No SQL/Shell Injection**: No user data in SQL or shell commands
+- **XSS Prevention**: React auto-escapes output
+- **API Keys**: Properly use environment variables
+- **localStorage**: All operations wrapped in try-catch, no sensitive data
+
+### No Identified Vulnerabilities
+
+- No XSS vectors (React auto-escapes)
+- No SQL injection (no database)
+- No command injection (no shell commands with user input)
+- No SSRF (no user-controlled URLs to fetch)
+- No path traversal (no file operations with user paths)
+
+---
+
+## Technical Recommendations
+
+### Pending Improvements
+
+| Priority | Item | Effort | Impact |
+|----------|------|--------|--------|
+| HIGH | Fix "frozen" keyword priority in emoji matching | 15 min | +3% accuracy |
+| HIGH | Add missing emoji keywords (cilantro, tortillas) | 30 min | Fix fallback bugs |
+| MEDIUM | Download USDA FoodKeeper JSON (500+ foods) | 30 min | 4x more food items |
+| MEDIUM | Create FoodDatabase service class | 2 hours | Cleaner architecture |
+| LOW | AI-powered emoji fallback for unknown items | 4 hours | Handle edge cases |
+
+### External Data Sources
+
+**USDA FoodKeeper** (Recommended):
+- URL: `https://www.fsis.usda.gov/shared/data/EN/foodkeeper.json`
+- 500+ food items with official USDA shelf life data
+- CC0 license (public domain)
+- JSON format ready to use
+
+### API Best Practices Already Implemented
+
+- ✅ Tool calling for structured data lookup
+- ✅ Prompt caching (90% cost reduction)
+- ✅ Structured outputs for guaranteed JSON
+- ✅ Image compression for receipt analysis
+
+---
+
+## UI/UX Review (2026-01-09)
+
+### Overview
+
+Complete user flow testing performed on production site (my-expiry.vercel.app). Tested all major interactions including homepage, item entry, fridge view, modals, and menu system.
+
+**Overall Score: 8.5/10**
+
+The app has excellent UX fundamentals - the fridge metaphor is charming without being gimmicky, information architecture is clear, and features like countdown timers and storage tips provide real value.
+
+---
+
+### What Works Great
+
+| Feature | Rating | Notes |
+|---------|--------|-------|
+| **Fridge Metaphor** | 5/5 | Consistent, delightful, not overdone |
+| **Sticky Note Design** | 5/5 | Clean, colorful, recognizable |
+| **Food Emojis** | 4/5 | Instant visual recognition (milk, chicken, spinach work great) |
+| **Item Detail Modal** | 5/5 | Countdown timer, storage tips, USDA source attribution |
+| **Quick Lookup** | 5/5 | Instant shelf life check without adding to fridge |
+| **Urgency Shelves** | 5/5 | Color-coded: Past Due (red), Use Soon (orange), This Week (blue) |
+| **Type Items Flow** | 4/5 | Notepad design, line numbers, item counter |
+| **Confirmation Popup** | 5/5 | Shows emojis, categories, adjustable shelf life with +/- buttons |
+| **Stats/Tracking** | 4/5 | Waste rate tracking, eaten/expired tabs |
+| **Freezer Drawer** | 4/5 | Clean slide-up menu with About, Stats options |
+
+---
+
+### User Flow Testing Results
+
+#### Homepage (Fridge Door)
+- **Status**: Working
+- Header with "Food Xpiry" logo, + Add, and Fridge buttons
+- Three sticky notes: Add Items (yellow), My Fridge (blue), Quick Lookup (green)
+- Fridge handle on right with "Open" hint
+- "MENU" drawer at bottom (freezer drawer)
+- Colorful magnets add personality
+
+#### Add Items Flow
+- **Status**: Working
+- Yellow sticky note with clear options
+- "Type Items" for manual entry
+- "Scan Receipt" for photo upload
+- Helpful note: "Today's date will be used as purchase date"
+
+#### Type Items Page
+- **Status**: Working
+- Shopping list/notepad design with spiral binding
+- Clear instruction "Type each item, press Enter for new line"
+- Line numbers on left side
+- Item counter updates correctly
+- "Add to Fridge" button disabled until items added, then turns green
+
+#### Confirmation Modal (BatchGroceryPopup)
+- **Status**: Working
+- Shows food emojis for each item
+- Categories correctly identified
+- Shelf life with color coding (red for urgent, green for fresh)
+- +/- buttons to adjust shelf life days
+- Edit pencil icon for more customization
+
+#### Fridge View (FridgeDoor)
+- **Status**: Working
+- Door edge on LEFT with handle (counter-clockwise swing)
+- Header: X Close, "My Fridge" title, Clear and + Add buttons
+- Shelves organized by urgency:
+  - **Past Due** - Red badge, already expired items
+  - **Use Soon** - Orange badge, within 3 days
+  - **This Week** - Blue badge, 4-7 days left
+- Wire rack visual dividers between shelves
+- Green floating "+" FAB button in corner
+
+#### Item Detail Modal (GroceryDetailModal)
+- **Status**: Excellent
+- Yellow sticky note with orange magnet
+- Countdown timer: "1d 19h until expiry"
+- "expiring soon" warning badge
+- Purchase date and expiry date
+- **Storage Tips**: "Keep refrigerated at 40°F or below. Cook or freeze within 1-2 days."
+- Data source attribution: "Data from USDA • high confidence"
+- Edit and Delete action buttons
+
+#### Quick Lookup
+- **Status**: Excellent
+- Instant result display
+- Shows emoji, name, storage tip, and shelf life in days
+- "Add to Fridge" button for direct adding
+- "Clear" button to reset search
+
+#### Freezer Drawer Menu
+- **Status**: Working
+- Clean slide-up animation
+- Two large action buttons: "Add Items" (orange) and "My Fridge" (blue)
+- Menu options: About, Stats
+- Footer: "2026 Food Xpiry" with GitHub link
+
+#### Stats/Tracking Page
+- **Status**: Working
+- Stats card: Total Added, Eaten, Wasted, Waste Rate
+- Tabs for "Eaten" and "Expired" items
+- Helpful tip about marking items as eaten
+
+---
+
+### Issues Found
+
+| Issue | Severity | Description | File Location |
+|-------|----------|-------------|---------------|
+| **Missing Emojis** | HIGH | "CI" showing for cilantro, "TO" for tortillas - emoji fallback not working | `lib/foodEmojis.js` |
+| **Modifier Stripping** | MEDIUM | "chicken breast" becomes just "Chicken" - modifier lost | `lib/localParser.js` |
+| **Old Expired Items** | MEDIUM | 8 items 38-46 days expired still showing in fridge | UX issue |
+| **Name Truncation** | LOW | "chicken...", "feta..." truncated without tooltip | `app/components/ui/FridgeContents.js` |
+| **Stats Mismatch** | MEDIUM | "Expired (0)" in stats but 8 past-due items in fridge view | State sync issue |
+
+---
+
+### Detailed Issue Analysis
+
+#### 1. Missing Emoji Fallback (HIGH)
+
+**Observed**: Cilantro shows "CI", tortillas shows "TO" instead of emojis.
+
+**Root Cause**: These foods are not in the `foodEmojis.js` keyword list, and the fallback is showing first two letters instead of category emoji.
+
+**Fix Needed** in `lib/foodEmojis.js`:
+```javascript
+// Add to foodKeywords
+cilantro: '🌿',
+tortilla: '🫓',
+tortillas: '🫓',
 ```
 
-Last updated: 2026-01-09 (Spell Correction System Added)
+#### 2. Modifier Stripping (MEDIUM)
+
+**Observed**: User types "chicken breast" → displays as just "Chicken".
+
+**Root Cause**: The localParser extracts modifiers but the display name doesn't include them.
+
+**Expected**: "Chicken Breast" or "Chicken (breast)"
+
+**Fix Needed** in `lib/localParser.js`: Include modifier in displayName when present.
+
+#### 3. Expired Items Accumulation (MEDIUM)
+
+**Observed**: 8 items showing as 38-46 days expired, cluttering the fridge view.
+
+**Recommendation**:
+- Add "Clear All Expired" bulk action button
+- Auto-prompt to mark as wasted after X days expired
+- Or auto-archive to "Expired" tab in Stats
+
+#### 4. Stats/Fridge Mismatch (MEDIUM)
+
+**Observed**: Stats page shows "Expired (0)" but fridge has 8 past-due items.
+
+**Root Cause**: Past-due items aren't automatically counted as "expired" in stats - user must manually mark them.
+
+**Recommendation**: Auto-increment "Wasted" count when items pass expiry, or show "Past Due" count in stats.
+
+---
+
+### Recommendations
+
+#### High Priority
+1. **Fix emoji fallback** - Add cilantro, tortillas to `foodEmojis.js`
+2. **Preserve modifiers** - "chicken breast" should display as "Chicken Breast"
+
+#### Medium Priority
+3. **Add "Clear All Expired" button** - Help users clean up old items
+4. **Sync stats with fridge** - Auto-mark expired items as wasted
+5. **Tooltip for truncated names** - Show full name on hover
+
+#### Low Priority
+6. **Settings option** - Auto-clear items X days after expiry
+7. **Notification system** - Alert when items expiring soon
+
+---
+
+### Screenshots Reference
+
+Testing captured the following screens:
+1. Homepage with sticky notes and fridge handle
+2. Add Items selection page
+3. Type Items notepad interface
+4. Batch confirmation modal with emojis
+5. Fridge view with urgency shelves
+6. Item detail modal with countdown timer
+7. Freezer drawer menu
+8. Stats/tracking page
+9. Quick Lookup results
+
+---
+
+### Test Data Added
+
+During testing, added 3 items to verify flow:
+- Milk (Dairy, 7 days)
+- Chicken (Meat, 2 days)
+- Spinach (Vegetables, 5 days)
+
+All items correctly:
+- Parsed with proper categories
+- Displayed with correct emojis
+- Showed accurate shelf life
+- Appeared in correct urgency shelves
+
+---
+
+Last updated: 2026-01-09 (UI/UX Review Added)

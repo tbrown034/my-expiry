@@ -397,6 +397,7 @@ export default function FridgePage() {
           isOpen={true}
           onEdit={handleEditItem}
           onDelete={handleDeleteItem}
+          onMarkAsEaten={handleMarkAsEaten}
           onClose={closeModal}
         />
       )}

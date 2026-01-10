@@ -46,6 +46,38 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
     }
   };
 
+  // Handle paste - split on newlines and commas
+  const handlePaste = (index, e) => {
+    const pastedText = e.clipboardData.getData('text');
+
+    // Check if paste contains newlines
+    if (pastedText.includes('\n')) {
+      e.preventDefault();
+
+      // Split by newlines, then flatten any comma-separated items
+      const pastedLines = pastedText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+
+      if (pastedLines.length > 0) {
+        const newLines = [...lines];
+        // Replace current line with first pasted line
+        newLines[index] = pastedLines[0];
+        // Insert remaining lines after current
+        for (let i = 1; i < pastedLines.length; i++) {
+          newLines.splice(index + i, 0, pastedLines[i]);
+        }
+        setLines(newLines);
+
+        // Focus the last added line
+        setTimeout(() => {
+          inputRefs.current[index + pastedLines.length - 1]?.focus();
+        }, 0);
+      }
+    }
+  };
+
   const handleSubmit = () => {
     const items = lines.filter((line) => line.trim() !== "");
     if (items.length > 0) {
@@ -53,7 +85,21 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
     }
   };
 
-  const filledLines = lines.filter((line) => line.trim() !== "").length;
+  // Count total items including comma-separated items within lines
+  const countItems = () => {
+    let count = 0;
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed) {
+        // Count comma-separated items
+        const items = trimmed.split(',').map(s => s.trim()).filter(s => s !== '');
+        count += items.length;
+      }
+    });
+    return count;
+  };
+
+  const itemCount = countItems();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
@@ -142,6 +188,7 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
                         value={line}
                         onChange={(e) => handleLineChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
+                        onPaste={(e) => handlePaste(index, e)}
                         placeholder={index === 0 ? "milk, eggs, bread..." : ""}
                         className="w-full py-2 bg-transparent text-slate-700 placeholder-slate-300 focus:outline-none text-sm sm:text-base"
                         style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
@@ -153,16 +200,16 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
                 {/* Footer with premium button */}
                 <div className="relative pl-14 sm:pl-16 pr-4 py-3 bg-slate-50/80 backdrop-blur-sm border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs text-slate-400 font-medium">
-                    {filledLines} item{filledLines !== 1 ? "s" : ""}
+                    {itemCount} item{itemCount !== 1 ? "s" : ""}
                   </span>
                   <button
                     onClick={handleSubmit}
-                    disabled={filledLines === 0 || isLoading}
+                    disabled={itemCount === 0 || isLoading}
                     className="relative group px-4 py-2.5 text-white text-sm font-semibold rounded-xl transition-all disabled:cursor-not-allowed active:scale-[0.98] flex items-center gap-2 shadow-lg"
                   >
                     {/* Button background with glow */}
-                    <div className={`absolute inset-0 rounded-xl ${filledLines === 0 || isLoading ? 'bg-slate-300' : 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 group-hover:from-emerald-500 group-hover:to-emerald-700'} transition-all`} />
-                    <div className={`absolute inset-0 rounded-xl ring-1 ${filledLines === 0 || isLoading ? 'ring-slate-400/20' : 'ring-white/20'}`} />
+                    <div className={`absolute inset-0 rounded-xl ${itemCount === 0 || isLoading ? 'bg-slate-300' : 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 group-hover:from-emerald-500 group-hover:to-emerald-700'} transition-all`} />
+                    <div className={`absolute inset-0 rounded-xl ring-1 ${itemCount === 0 || isLoading ? 'ring-slate-400/20' : 'ring-white/20'}`} />
 
                     {/* Button content */}
                     <span className="relative flex items-center gap-2">

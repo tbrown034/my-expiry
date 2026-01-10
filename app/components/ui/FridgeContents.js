@@ -9,6 +9,8 @@ export default function FridgeContents({
   onMarkAsEaten,
   onDeleteItem,
 }) {
+  // State for clear all confirmation
+  const [clearConfirm, setClearConfirm] = useState({ show: false, shelfName: '', items: [] });
   // Group identical items (same name + expiry date) with quantity
   const groupItems = (items) => {
     const grouped = new Map();
@@ -29,20 +31,18 @@ export default function FridgeContents({
     return Array.from(grouped.values());
   };
 
-  // Group items by urgency for different shelves
-  const { expired, expiringSoon, thisWeek, later, eaten } = useMemo(() => {
-    const sorted = [...groceries].sort((a, b) => {
-      if (a.eaten && !b.eaten) return 1;
-      if (!a.eaten && b.eaten) return -1;
-      return new Date(a.expiryDate) - new Date(b.expiryDate);
-    });
+  // Group items by urgency for the 3 shelves (exclude eaten items - they go to history page)
+  const { useSoon, thisWeek, crisper } = useMemo(() => {
+    const activeItems = groceries.filter(i => !i.eaten);
+    const sorted = [...activeItems].sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
 
     return {
-      expired: groupItems(sorted.filter(i => !i.eaten && i.daysUntilExpiry < 0)),
-      expiringSoon: groupItems(sorted.filter(i => !i.eaten && i.daysUntilExpiry >= 0 && i.daysUntilExpiry <= 3)),
-      thisWeek: groupItems(sorted.filter(i => !i.eaten && i.daysUntilExpiry > 3 && i.daysUntilExpiry <= 7)),
-      later: groupItems(sorted.filter(i => !i.eaten && i.daysUntilExpiry > 7)),
-      eaten: groupItems(sorted.filter(i => i.eaten)),
+      // Use Soon: expired + within 3 days
+      useSoon: groupItems(sorted.filter(i => i.daysUntilExpiry <= 3)),
+      // This Week: 4-7 days
+      thisWeek: groupItems(sorted.filter(i => i.daysUntilExpiry > 3 && i.daysUntilExpiry <= 7)),
+      // Crisper: more than a week
+      crisper: groupItems(sorted.filter(i => i.daysUntilExpiry > 7)),
     };
   }, [groceries]);
 
@@ -55,24 +55,23 @@ export default function FridgeContents({
       return daysAgo === 1 ? 'Expired 1d' : `Expired ${daysAgo}d`;
     }
     if (days === 0) return 'Use today';
-    if (days === 1) return '1d left';
-    return `${days}d left`;
+    if (days === 1) return '1d fresh';
+    return `${days}d fresh`;
   };
 
-  // Get urgency styles
+  // Get urgency styles - softer, less alarming colors
   const getUrgencyStyle = (item) => {
     if (item.eaten) return { badge: 'text-emerald-700 bg-emerald-100/90', glow: '' };
-    if (item.daysUntilExpiry < 0) return { badge: 'text-red-700 bg-red-100/90', glow: 'shadow-red-200/50' };
-    if (item.daysUntilExpiry <= 2) return { badge: 'text-red-600 bg-red-100/90', glow: 'shadow-red-200/50' };
-    if (item.daysUntilExpiry <= 5) return { badge: 'text-amber-700 bg-amber-100/90', glow: 'shadow-amber-200/50' };
-    return { badge: 'text-slate-600 bg-white/80', glow: '' };
+    if (item.daysUntilExpiry < 0) return { badge: 'text-orange-700 bg-orange-100/90', glow: '' };
+    if (item.daysUntilExpiry <= 3) return { badge: 'text-amber-700 bg-amber-100/90', glow: '' };
+    if (item.daysUntilExpiry <= 7) return { badge: 'text-sky-700 bg-sky-100/90', glow: '' };
+    return { badge: 'text-emerald-600 bg-emerald-50/90', glow: '' };
   };
 
   // Food item - sits on the shelf
   const FoodItem = ({ item }) => {
     const [isHovered, setIsHovered] = useState(false);
     const emoji = getFoodEmoji(item.name, item.category);
-    const isUrgent = item.daysUntilExpiry <= 3 && !item.eaten;
     const urgencyStyle = getUrgencyStyle(item);
     const quantity = item.quantity || 1;
 
@@ -134,7 +133,7 @@ export default function FridgeContents({
         `}>
           {/* Emoji with subtle shadow */}
           <span
-            className={`text-3xl sm:text-4xl block transition-all duration-500 ease-out ${isUrgent ? 'animate-pulse' : ''}`}
+            className="text-3xl sm:text-4xl block transition-all duration-500 ease-out"
             style={{
               filter: isHovered
                 ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))'
@@ -179,34 +178,56 @@ export default function FridgeContents({
           `}>
             {getDaysText(item)}
           </span>
+          {/* Source indicator - shows where data came from */}
+          {item.source && !item.eaten && (
+            <span className={`
+              block text-[7px] mt-0.5 font-medium
+              ${item.source === 'AI' ? 'text-purple-500' :
+                item.source === 'default' || item.source === 'USDA Food Safety Guidelines' ? 'text-orange-400' :
+                'text-slate-400'}
+            `}>
+              {item.source === 'USDA' ? '✓ USDA' :
+               item.source === 'FDA' ? '✓ FDA' :
+               item.source === 'AI' ? '🤖 AI' :
+               item.source === 'default' || item.source === 'USDA Food Safety Guidelines' ? '⚠️ est.' :
+               item.source}
+            </span>
+          )}
         </div>
       </div>
     );
   };
 
-  // Delete all items in a category
-  const handleDeleteAll = (items) => {
-    items.forEach(item => {
+  // Show confirmation before clearing a shelf
+  const handleClearAllClick = (shelfName, items) => {
+    setClearConfirm({ show: true, shelfName, items });
+  };
+
+  // Actually delete all items after confirmation
+  const handleConfirmClearAll = () => {
+    clearConfirm.items.forEach(item => {
       const ids = item.ids || [item.id];
       ids.forEach(id => onDeleteItem?.(id));
     });
+    setClearConfirm({ show: false, shelfName: '', items: [] });
   };
 
-  // Glass shelf with realistic 3D appearance
-  const GlassShelf = ({ title, subtitle, items, emoji, urgent = false }) => {
-    if (items.length === 0) return null;
+  // Cancel clear all
+  const handleCancelClearAll = () => {
+    setClearConfirm({ show: false, shelfName: '', items: [] });
+  };
 
+  // Glass shelf with realistic 3D appearance - always shows even when empty
+  const GlassShelf = ({ title, subtitle, items, emoji, colorClass = 'from-slate-600 to-slate-500' }) => {
     // Count total items including quantities
     const totalCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const isEmpty = items.length === 0;
 
     return (
       <div className="relative mb-2">
         {/* Shelf header */}
         <div className="flex items-center justify-between px-3 pt-2 pb-1">
-          <div className={`
-            flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-sm
-            ${urgent ? 'bg-gradient-to-r from-red-500 to-red-400' : 'bg-gradient-to-r from-slate-600 to-slate-500'}
-          `}>
+          <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-sm bg-gradient-to-r ${colorClass}`}>
             <span className="text-sm">{emoji}</span>
             <div className="flex flex-col">
               <span className="text-[11px] font-bold text-white tracking-wide">{title}</span>
@@ -215,22 +236,30 @@ export default function FridgeContents({
             <span className="text-[10px] text-white/80 font-semibold ml-1">({totalCount})</span>
           </div>
 
-          {/* Delete all button */}
-          <button
-            onClick={() => handleDeleteAll(items)}
-            className="px-2.5 py-1.5 text-[10px] font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
-          >
-            Clear all
-          </button>
+          {/* Delete all button - only show if items exist */}
+          {!isEmpty && (
+            <button
+              onClick={() => handleClearAllClick(title, items)}
+              className="px-2.5 py-1.5 text-[10px] font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+            >
+              Clear all
+            </button>
+          )}
         </div>
 
         {/* Food items sitting on shelf */}
         <div className="pt-12 pb-3 px-4">
-          <div className="flex flex-wrap gap-x-5 gap-y-14 sm:gap-x-6 sm:gap-y-16 justify-start items-end min-h-[80px]">
-            {items.map(item => (
-              <FoodItem key={item.id} item={item} />
-            ))}
-          </div>
+          {isEmpty ? (
+            <div className="flex items-center justify-center min-h-[60px] text-slate-400 text-sm">
+              No items
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-x-5 gap-y-14 sm:gap-x-6 sm:gap-y-16 justify-start items-end min-h-[80px]">
+              {items.map(item => (
+                <FoodItem key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Glass shelf surface - the actual shelf */}
@@ -256,12 +285,11 @@ export default function FridgeContents({
     );
   };
 
-  // Crisper drawer at the bottom
+  // Crisper drawer at the bottom - always shows
   const CrisperDrawer = ({ items }) => {
-    if (items.length === 0) return null;
-
     // Count total items including quantities
     const totalCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const isEmpty = items.length === 0;
 
     return (
       <div className="relative mx-2 mt-4">
@@ -270,19 +298,21 @@ export default function FridgeContents({
           <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg shadow-sm bg-gradient-to-r from-emerald-600 to-emerald-500">
             <span className="text-sm">🥬</span>
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-white tracking-wide">Fresh</span>
+              <span className="text-[11px] font-bold text-white tracking-wide">Crisper</span>
               <span className="text-[9px] text-white/60">More than a week</span>
             </div>
             <span className="text-[10px] text-white/80 font-semibold ml-1">({totalCount})</span>
           </div>
 
-          {/* Delete all button */}
-          <button
-            onClick={() => handleDeleteAll(items)}
-            className="px-2.5 py-1.5 text-[10px] font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
-          >
-            Clear all
-          </button>
+          {/* Delete all button - only show if items exist */}
+          {!isEmpty && (
+            <button
+              onClick={() => handleClearAllClick('Crisper', items)}
+              className="px-2.5 py-1.5 text-[10px] font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+            >
+              Clear all
+            </button>
+          )}
         </div>
 
         {/* Drawer container */}
@@ -301,52 +331,22 @@ export default function FridgeContents({
               }}
             />
 
-            <div className="relative flex flex-wrap gap-x-5 gap-y-14 sm:gap-x-6 sm:gap-y-16 justify-start items-end min-h-[80px]">
-              {items.map(item => (
-                <FoodItem key={item.id} item={item} />
-              ))}
-            </div>
+            {isEmpty ? (
+              <div className="relative flex items-center justify-center min-h-[60px] text-slate-400 text-sm">
+                No items
+              </div>
+            ) : (
+              <div className="relative flex flex-wrap gap-x-5 gap-y-14 sm:gap-x-6 sm:gap-y-16 justify-start items-end min-h-[80px]">
+                {items.map(item => (
+                  <FoodItem key={item.id} item={item} />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Drawer bottom edge */}
           <div className="h-2 bg-gradient-to-b from-slate-200/60 to-slate-300/40 rounded-b-xl shadow-sm" />
         </div>
-      </div>
-    );
-  };
-
-  // Eaten items section - small collapsed area
-  const EatenSection = ({ items }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    if (items.length === 0) return null;
-
-    return (
-      <div className="mx-2 mt-6 mb-4">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 px-3 py-2 bg-emerald-50/80 hover:bg-emerald-100/80 rounded-lg transition-colors w-full"
-        >
-          <span className="text-base">✅</span>
-          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Eaten</span>
-          <span className="text-xs text-emerald-600/70 font-medium">({items.length})</span>
-          <svg
-            className={`w-4 h-4 text-emerald-600 ml-auto transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {isExpanded && (
-          <div className="mt-3 pt-10 px-3 pb-3 flex flex-wrap gap-x-5 gap-y-14 sm:gap-x-6 sm:gap-y-16 justify-start items-end">
-            {items.map(item => (
-              <FoodItem key={item.id} item={item} />
-            ))}
-          </div>
-        )}
       </div>
     );
   };
@@ -373,48 +373,61 @@ export default function FridgeContents({
         }}
       />
 
-      {/* Shelves */}
+      {/* Shelves - always show all 3 */}
       <div className="relative pt-4">
-        {/* Past Due - top shelf (bad items at eye level) */}
-        <GlassShelf
-          title="Past Due"
-          subtitle="Already expired"
-          items={expired}
-          emoji="🚨"
-          urgent={true}
-        />
-
-        {/* Expiring Soon */}
+        {/* Use Soon - top shelf */}
         <GlassShelf
           title="Use Soon"
           subtitle="Within 3 days"
-          items={expiringSoon}
-          emoji="⚠️"
-          urgent={true}
+          items={useSoon}
+          emoji="🍳"
+          colorClass="from-amber-500 to-amber-400"
         />
 
         {/* This Week */}
         <GlassShelf
           title="This Week"
-          subtitle="4-7 days left"
+          subtitle="4-7 days"
           items={thisWeek}
           emoji="📅"
+          colorClass="from-sky-500 to-sky-400"
         />
 
         {/* Crisper Drawer - bottom for fresh items */}
-        <CrisperDrawer items={later} />
-
-        {/* Eaten Section - collapsible */}
-        <EatenSection items={eaten} />
+        <CrisperDrawer items={crisper} />
       </div>
 
-      {/* Empty state */}
-      {groceries.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-6">
-            <div className="text-6xl mb-4">🧊</div>
-            <p className="text-slate-500 font-medium">Your fridge is empty</p>
-            <p className="text-slate-400 text-sm mt-1">Add some items to get started</p>
+      {/* Clear All Confirmation Modal */}
+      {clearConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full animate-scale-in">
+            <div className="text-center">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                Clear {clearConfirm.shelfName}?
+              </h3>
+              <p className="text-sm text-slate-600 mb-6">
+                This will delete {clearConfirm.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} item{clearConfirm.items.reduce((sum, item) => sum + (item.quantity || 1), 0) !== 1 ? 's' : ''} from your fridge. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelClearAll}
+                  className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmClearAll}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Delete All
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
