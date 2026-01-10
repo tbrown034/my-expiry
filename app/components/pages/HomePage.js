@@ -325,7 +325,7 @@ export default function HomePage() {
                               </button>
                             </div>
                             <p className="text-[10px] text-slate-400 text-center mt-2">
-                              Tip: Be specific like "leftover fries" or "fresh chicken"
+                              Tip: Be specific like &ldquo;leftover fries&rdquo; or &ldquo;fresh chicken&rdquo;
                             </p>
                           </div>
                         </motion.div>

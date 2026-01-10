@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from 'next/server';
 import { logError, createErrorResponse } from '../../../lib/errorHandling';
+import { checkRateLimit, getExpiryStatusSafe, clampShelfLifeDays } from '../../../lib/validation';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -261,18 +262,18 @@ async function getShelfLifeWithTools(items, purchaseDate) {
 }
 
 // ==================== API ROUTE ====================
-function getExpiryStatus(expiryDate) {
-  const today = new Date();
-  const expiry = new Date(expiryDate);
-  const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-  if (daysUntilExpiry < 0) return "expired";
-  if (daysUntilExpiry <= 3) return "expiring_soon";
-  return "fresh";
-}
 
 export async function POST(request) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit('api:get-shelf-life:global', { perMinute: 20, perHour: 200, perDay: 1000 });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.error },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      );
+    }
+
     // Check API key
     if (!process.env.ANTHROPIC_API_KEY) {
       const error = new Error('ANTHROPIC_API_KEY not configured');
@@ -301,16 +302,19 @@ export async function POST(request) {
 
     // Process and enrich results
     const processedItems = shelfLifeResults.map(item => {
+      // Clamp shelf life to valid range
+      const safeDays = clampShelfLifeDays(item.shelfLifeDays);
       const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + item.shelfLifeDays);
+      expiryDate.setDate(expiryDate.getDate() + safeDays);
       const expiryDateStr = expiryDate.toISOString().split('T')[0];
 
       return {
         ...item,
         purchaseDate: today,
         expiryDate: expiryDateStr,
-        daysUntilExpiry: item.shelfLifeDays,
-        status: getExpiryStatus(expiryDateStr),
+        shelfLifeDays: safeDays,
+        daysUntilExpiry: safeDays,
+        status: getExpiryStatusSafe(expiryDateStr),
         addedManually: true
       };
     });

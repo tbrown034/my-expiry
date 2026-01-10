@@ -164,7 +164,7 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
 
                 {/* Header area */}
                 <div className="relative pl-14 sm:pl-16 pr-4 pt-5 pb-3 border-b border-slate-100">
-                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Shopping List</h2>
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">What I Bought</h2>
                   <p className="text-xs text-slate-400 mt-0.5">Type each item, press Enter for new line</p>
                 </div>
 

@@ -400,16 +400,10 @@ body {
 
 .status-dot-expiring {
   background-color: var(--color-expiring);
-  animation: pulse-warning 2s ease-in-out infinite;
 }
 
 .status-dot-expired {
   background-color: var(--color-expired);
-}
-
-@keyframes pulse-warning {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
 }
 
 /* ============================================
@@ -478,15 +472,30 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.35s ease-in-out;
 }
 
 .animate-fade-up {
-  animation: fade-up 0.4s var(--ease-out-expo);
+  animation: fade-up 0.45s ease-in-out;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.25s var(--ease-out-expo);
+  animation: scale-in 0.3s ease-in-out;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
 }
 
 /* Stagger children */

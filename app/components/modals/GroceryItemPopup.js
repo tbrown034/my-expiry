@@ -3,15 +3,24 @@
 import { useState, useEffect } from 'react';
 import { Category } from '../../../lib/types';
 import { formatExpiryDate } from '../../../lib/utils';
+import {
+  LIMITS,
+  validateItemName,
+  validatePurchaseDate,
+  validateExpiryDate,
+  clampShelfLifeDays
+} from '../../../lib/validation';
 
 export default function GroceryItemPopup({ item, onConfirm, onCancel }) {
   const [formData, setFormData] = useState({
     name: item?.name || '',
     category: item?.estimatedCategory || Category.OTHER,
     purchaseDate: new Date().toISOString().split('T')[0],
-    shelfLifeDays: item?.shelfLifeDays || 7,
-    expiryDate: ''
+    shelfLifeDays: clampShelfLifeDays(item?.shelfLifeDays || 7),
+    expiryDate: '',
+    quantity: item?.quantity || 1
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const calculateExpiryDate = () => {
@@ -30,16 +39,47 @@ export default function GroceryItemPopup({ item, onConfirm, onCancel }) {
   const handleShelfLifeChange = (delta) => {
     setFormData(prev => ({
       ...prev,
-      shelfLifeDays: Math.max(1, prev.shelfLifeDays + delta)
+      shelfLifeDays: clampShelfLifeDays(prev.shelfLifeDays + delta)
+    }));
+  };
+
+  const handleQuantityChange = (delta) => {
+    setFormData(prev => ({
+      ...prev,
+      quantity: Math.max(LIMITS.MIN_QUANTITY, Math.min(LIMITS.MAX_QUANTITY, prev.quantity + delta))
     }));
   };
 
   const handleConfirm = () => {
+    setErrors({});
+
+    // Validate item name
+    const nameValidation = validateItemName(formData.name);
+    if (!nameValidation.valid) {
+      setErrors(prev => ({ ...prev, name: nameValidation.error }));
+      return;
+    }
+
+    // Validate purchase date
+    const purchaseValidation = validatePurchaseDate(formData.purchaseDate);
+    if (!purchaseValidation.valid) {
+      setErrors(prev => ({ ...prev, purchaseDate: purchaseValidation.error }));
+      return;
+    }
+
+    // Validate expiry date
+    const expiryValidation = validateExpiryDate(formData.expiryDate, formData.purchaseDate);
+    if (!expiryValidation.valid) {
+      setErrors(prev => ({ ...prev, expiryDate: expiryValidation.error }));
+      return;
+    }
+
     onConfirm({
-      name: formData.name,
+      name: nameValidation.sanitized,
       category: formData.category,
       purchaseDate: formData.purchaseDate,
       expiryDate: formData.expiryDate,
+      quantity: formData.quantity,
       addedManually: false
     });
   };
@@ -82,16 +122,42 @@ export default function GroceryItemPopup({ item, onConfirm, onCancel }) {
             </div>
 
             <div className="space-y-4">
-              {/* Item Name */}
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">Item Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-transparent border-b-2 border-slate-300 focus:border-slate-600 px-1 py-2 text-lg text-slate-800 focus:outline-none transition-colors"
-                  style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
-                />
+              {/* Item Name & Quantity Row */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Item Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    maxLength={LIMITS.MAX_ITEM_NAME_LENGTH}
+                    className={`w-full bg-transparent border-b-2 focus:border-slate-600 px-1 py-2 text-lg text-slate-800 focus:outline-none transition-colors ${
+                      errors.name ? 'border-red-500' : 'border-slate-300'
+                    }`}
+                    style={{ fontFamily: "'Patrick Hand', cursive, sans-serif" }}
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+                  )}
+                </div>
+                <div className="w-28">
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Qty</label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(-1)}
+                      className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 font-bold transition-colors"
+                    >−</button>
+                    <span className="font-bold text-slate-700 min-w-[28px] text-center text-lg">
+                      {formData.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(1)}
+                      className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 font-bold transition-colors"
+                    >+</button>
+                  </div>
+                </div>
               </div>
 
               {/* Category */}
@@ -121,17 +187,29 @@ export default function GroceryItemPopup({ item, onConfirm, onCancel }) {
                   type="date"
                   value={formData.purchaseDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, purchaseDate: e.target.value }))}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full bg-white/50 border border-slate-300 rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  max={(() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + LIMITS.MAX_PURCHASE_DATE_FUTURE_DAYS);
+                    return d.toISOString().split('T')[0];
+                  })()}
+                  className={`w-full bg-white/50 border rounded px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 ${
+                    errors.purchaseDate ? 'border-red-500' : 'border-slate-300'
+                  }`}
                 />
+                {errors.purchaseDate && (
+                  <p className="mt-1 text-xs text-red-600">{errors.purchaseDate}</p>
+                )}
               </div>
 
               {/* Shelf Life & Expiry Display */}
-              <div className={`rounded-lg p-3 ${expiryInfo?.urgent ? 'bg-red-50/80' : 'bg-white/50'}`}>
-                {expiryInfo && (
+              <div className={`rounded-lg p-3 ${errors.expiryDate ? 'bg-red-50/80' : expiryInfo?.urgent ? 'bg-red-50/80' : 'bg-white/50'}`}>
+                {expiryInfo && !errors.expiryDate && (
                   <div className={`text-center text-lg font-bold mb-2 ${expiryInfo.color}`}>
                     {expiryInfo.text}
                   </div>
+                )}
+                {errors.expiryDate && (
+                  <p className="text-center text-sm text-red-600 mb-2">{errors.expiryDate}</p>
                 )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

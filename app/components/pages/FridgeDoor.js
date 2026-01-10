@@ -86,52 +86,26 @@ export default function FridgeDoor({
             </button>
           </div>
 
-          {/* Main content - fridge interior */}
+          {/* Main content - always show fridge shelves */}
           <div className="flex-1 overflow-auto relative z-10">
-            {groceries.length === 0 ? (
-              /* Empty fridge state */
-              <div className="flex flex-col items-center justify-center h-full px-4 py-16">
-                {/* Empty fridge illustration */}
-                <div className="w-32 h-40 bg-white/60 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center mb-6">
-                  <svg className="w-12 h-12 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  <span className="text-slate-400 text-xs">Empty</span>
-                </div>
-                <h2 className="text-lg font-semibold text-slate-600 mb-2">Fridge is empty!</h2>
-                <p className="text-slate-400 text-sm mb-6 text-center max-w-xs">
-                  Stock up your fridge to start tracking what you have
-                </p>
-                <button
-                  onClick={onAddShoppingTrip}
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors shadow-md"
-                >
-                  + Add Food
-                </button>
-              </div>
-            ) : (
-              /* Fridge contents with shelves */
-              <FridgeContents
-                groceries={groceries}
-                onItemClick={onItemClick}
-                onMarkAsEaten={onMarkAsEaten}
-                onDeleteItem={onDeleteItem}
-              />
-            )}
+            <FridgeContents
+              groceries={groceries}
+              onItemClick={onItemClick}
+              onMarkAsEaten={onMarkAsEaten}
+              onDeleteItem={onDeleteItem}
+            />
           </div>
 
-          {/* FAB for when there are items */}
-          {groceries.length > 0 && (
-            <button
-              onClick={onAddShoppingTrip}
-              className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all flex items-center justify-center z-50"
-              title="Add food"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
-              </svg>
-            </button>
-          )}
+          {/* FAB - always show */}
+          <button
+            onClick={onAddShoppingTrip}
+            className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all flex items-center justify-center z-50"
+            title="Add food"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

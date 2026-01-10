@@ -264,49 +264,47 @@ export default function FridgePage() {
             </Link>
           </div>
 
-          {/* Main content */}
+          {/* Main content - always show shelves */}
           <div className="flex-1 overflow-auto relative z-10">
-            {groceries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full px-4 py-16">
-                <div className="w-32 h-40 bg-white/60 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center mb-6">
-                  <svg className="w-12 h-12 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  <span className="text-slate-400 text-xs">Empty</span>
-                </div>
-                <h2 className="text-lg font-semibold text-slate-600 mb-2">Fridge is empty!</h2>
-                <p className="text-slate-400 text-sm mb-6 text-center max-w-xs">
-                  Stock up your fridge to start tracking what you have
-                </p>
-                <Link
-                  href="/add"
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors shadow-md"
-                >
-                  + Add Food
-                </Link>
-              </div>
-            ) : (
-              <FridgeContents
-                groceries={groceries}
-                onItemClick={handleItemClick}
-                onMarkAsEaten={handleMarkAsEaten}
-                onDeleteItem={handleDeleteItem}
-              />
-            )}
+            <FridgeContents
+              groceries={groceries}
+              onItemClick={handleItemClick}
+              onMarkAsEaten={handleMarkAsEaten}
+              onDeleteItem={handleDeleteItem}
+            />
           </div>
 
-          {/* FAB */}
-          {groceries.length > 0 && (
+          {/* Bottom Navigation */}
+          <div className="relative z-20 flex items-center justify-around py-2 px-4 bg-white/90 backdrop-blur-sm border-t border-slate-200">
+            <Link
+              href="/"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-slate-500 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-100"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="text-xs font-medium">Home</span>
+            </Link>
+
             <Link
               href="/add"
-              className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all flex items-center justify-center z-50"
-              title="Add food"
+              className="flex flex-col items-center gap-1 px-4 py-2 -mt-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v12m6-6H6" />
               </svg>
             </Link>
-          )}
+
+            <Link
+              href="/tracking"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-slate-500 hover:text-slate-700 transition-colors rounded-lg hover:bg-slate-100"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="text-xs font-medium">History</span>
+            </Link>
+          </div>
         </div>
       </div>
 

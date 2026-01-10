@@ -74,6 +74,21 @@ export function GroceryProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Check storage status
+  const checkStorage = useCallback(() => {
+    return storage.checkStatus();
+  }, []);
+
+  // Find duplicates for a potential new item
+  const findDuplicates = useCallback((item) => {
+    return storage.findDuplicates(item);
+  }, []);
+
+  // Check if we can add items
+  const canAdd = useCallback((count = 1) => {
+    return storage.canAdd(count);
+  }, []);
+
   // Add single grocery
   const addGrocery = useCallback((groceryData, batchMetadata = null) => {
     try {
@@ -83,14 +98,23 @@ export function GroceryProvider({ children }) {
         addedAt: new Date().toISOString(),
       };
 
-      const saved = storage.addGrocery({
+      const result = storage.addGrocery({
         ...groceryData,
         batchMetadata: metadata,
       });
 
-      const enriched = enrichGrocery(saved);
+      // Handle new return format from storage
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      const enriched = enrichGrocery(result.grocery);
       dispatch({ type: ACTIONS.ADD, grocery: enriched });
-      return { success: true, grocery: enriched };
+      return {
+        success: true,
+        grocery: enriched,
+        warning: result.warning  // Pass through any warnings
+      };
     } catch {
       return { success: false, error: 'Failed to add grocery item' };
     }
@@ -107,16 +131,26 @@ export function GroceryProvider({ children }) {
         addedAt: new Date().toISOString(),
       };
 
-      const savedItems = items.map(item => {
-        const saved = storage.addGrocery({
-          ...item,
-          batchMetadata,
-        });
-        return enrichGrocery(saved);
-      });
+      // Use new batch add method
+      const itemsWithMetadata = items.map(item => ({
+        ...item,
+        batchMetadata,
+      }));
 
-      dispatch({ type: ACTIONS.ADD_BATCH, groceries: savedItems });
-      return { success: true, count: savedItems.length };
+      const result = storage.addGroceries(itemsWithMetadata);
+
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      const enrichedItems = result.added.map(enrichGrocery);
+      dispatch({ type: ACTIONS.ADD_BATCH, groceries: enrichedItems });
+
+      return {
+        success: true,
+        count: enrichedItems.length,
+        warning: result.warning  // Pass through any warnings
+      };
     } catch {
       return { success: false, error: 'Failed to add items' };
     }
@@ -214,6 +248,10 @@ export function GroceryProvider({ children }) {
     markAsEaten,
     markAsExpired,
     getGroceryById,
+    // New validation methods
+    checkStorage,
+    findDuplicates,
+    canAdd,
   };
 
   return (

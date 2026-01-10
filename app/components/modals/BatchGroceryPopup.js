@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { Category } from '../../../lib/types';
 import { getFoodEmoji } from '../../../lib/foodEmojis';
 import { Magnet } from '../svg';
+import {
+  LIMITS,
+  validateItemName,
+  validatePurchaseDate,
+  validateExpiryDate,
+  clampShelfLifeDays
+} from '../../../lib/validation';
 
 // Map lowercase API categories to Category enum values
 function normalizeCategory(apiCategory) {
@@ -53,6 +60,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
       storageRecommendations: item.storageRecommendations,
       source: item.source,
       confidence: item.confidence,
+      quantity: item.quantity || 1,
     }));
 
     // Check if we already have shelf life data
@@ -115,8 +123,8 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
   const adjustDays = (id, delta) => {
     const item = items.find(i => i.id === id);
     if (item?.shelfLifeDays !== undefined) {
-      const newDays = Math.max(1, item.shelfLifeDays + delta);
-      const newExpiry = new Date();
+      const newDays = clampShelfLifeDays(item.shelfLifeDays + delta);
+      const newExpiry = new Date(item.purchaseDate || new Date());
       newExpiry.setDate(newExpiry.getDate() + newDays);
       setItems(prev => prev.map(i =>
         i.id === id ? { ...i, shelfLifeDays: newDays, expiryDate: newExpiry.toISOString().split('T')[0] } : i
@@ -124,20 +132,57 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
     }
   };
 
+  const adjustQuantity = (id, delta) => {
+    setItems(prev => prev.map(i =>
+      i.id === id ? { ...i, quantity: Math.max(LIMITS.MIN_QUANTITY, Math.min(LIMITS.MAX_QUANTITY, (i.quantity || 1) + delta)) } : i
+    ));
+  };
+
   const handleConfirm = () => {
-    onConfirm(items.map(item => ({
-      name: item.name,
-      modifier: item.modifier,
-      category: item.category,
-      foodType: item.foodType,
-      purchaseDate: item.purchaseDate,
-      expiryDate: item.expiryDate,
-      shelfLifeDays: item.shelfLifeDays,
-      storageRecommendations: item.storageRecommendations,
-      source: item.source,
-      confidence: item.confidence,
-      addedManually: true
-    })));
+    // Validate all items
+    const validationErrors = [];
+    const validatedItems = items.map((item, index) => {
+      const nameValidation = validateItemName(item.name);
+      if (!nameValidation.valid) {
+        validationErrors.push(`Item ${index + 1}: ${nameValidation.error}`);
+        return null;
+      }
+
+      const purchaseDate = item.purchaseDate || new Date().toISOString().split('T')[0];
+      const purchaseValidation = validatePurchaseDate(purchaseDate);
+      if (!purchaseValidation.valid) {
+        validationErrors.push(`Item ${index + 1}: ${purchaseValidation.error}`);
+        return null;
+      }
+
+      const expiryValidation = validateExpiryDate(item.expiryDate, purchaseDate);
+      if (!expiryValidation.valid) {
+        validationErrors.push(`Item ${index + 1}: ${expiryValidation.error}`);
+        return null;
+      }
+
+      return {
+        name: nameValidation.sanitized,
+        modifier: item.modifier,
+        category: item.category,
+        foodType: item.foodType,
+        purchaseDate: purchaseDate,
+        expiryDate: item.expiryDate,
+        shelfLifeDays: clampShelfLifeDays(item.shelfLifeDays),
+        storageRecommendations: item.storageRecommendations,
+        source: item.source,
+        confidence: item.confidence,
+        quantity: item.quantity || 1,
+        addedManually: true
+      };
+    });
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('. '));
+      return;
+    }
+
+    onConfirm(validatedItems.filter(Boolean));
   };
 
   const getExpiryText = (days) => {
@@ -268,6 +313,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                         type="text"
                         value={item.name}
                         onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        maxLength={LIMITS.MAX_ITEM_NAME_LENGTH}
                         className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                         placeholder="Item name"
                       />
@@ -322,21 +368,40 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                         </div>
                       </div>
 
-                      {/* Days adjuster - 44px touch targets */}
+                      {/* Quantity adjuster */}
+                      <div className="flex items-center gap-0.5 mr-1">
+                        <button
+                          onClick={() => adjustQuantity(item.id, -1)}
+                          className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold transition-colors active:scale-95"
+                        >
+                          −
+                        </button>
+                        <span className="w-6 text-center text-xs font-semibold text-slate-600">
+                          {item.quantity || 1}x
+                        </span>
+                        <button
+                          onClick={() => adjustQuantity(item.id, 1)}
+                          className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold transition-colors active:scale-95"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* Days adjuster */}
                       {item.shelfLifeDays !== undefined && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5">
                           <button
                             onClick={() => adjustDays(item.id, -1)}
-                            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors active:scale-95"
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold transition-colors active:scale-95"
                           >
                             −
                           </button>
-                          <span className="w-10 text-center text-sm font-semibold text-slate-700">
+                          <span className="w-8 text-center text-xs font-semibold text-slate-600">
                             {item.shelfLifeDays}d
                           </span>
                           <button
                             onClick={() => adjustDays(item.id, 1)}
-                            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors active:scale-95"
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold transition-colors active:scale-95"
                           >
                             +
                           </button>

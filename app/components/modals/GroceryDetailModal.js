@@ -124,10 +124,17 @@ export default function GroceryDetailModal({ grocery, onEdit, onDelete, onMarkAs
 
               {/* Details Grid */}
               <div className="space-y-3">
-                <div className="bg-white/50 rounded-lg p-3 border border-slate-200">
-                  <div className="text-xs font-semibold text-slate-600 mb-1">🛒 Purchased</div>
-                  <div className="text-sm text-slate-800 font-medium">{formatDate(grocery.purchaseDate)}</div>
-                  <div className="text-xs text-slate-500">{getDaysFromPurchase()}</div>
+                {/* Quantity & Purchase in a row */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white/50 rounded-lg p-3 border border-slate-200">
+                    <div className="text-xs font-semibold text-slate-600 mb-1">📦 Quantity</div>
+                    <div className="text-lg text-slate-800 font-bold">{grocery.quantity || 1}</div>
+                  </div>
+                  <div className="bg-white/50 rounded-lg p-3 border border-slate-200">
+                    <div className="text-xs font-semibold text-slate-600 mb-1">🛒 Purchased</div>
+                    <div className="text-sm text-slate-800 font-medium">{formatDate(grocery.purchaseDate)}</div>
+                    <div className="text-xs text-slate-500">{getDaysFromPurchase()}</div>
+                  </div>
                 </div>
 
                 <div className="bg-white/50 rounded-lg p-3 border border-slate-200">

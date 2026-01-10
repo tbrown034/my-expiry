@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { Category } from '../../../lib/types';
 import { ButtonSpinner } from '../ui/LoadingSpinner';
+import {
+  LIMITS,
+  validateItemName,
+  validatePurchaseDate,
+  validateExpiryDate
+} from '../../../lib/validation';
 
 export default function AddGroceryForm({ onSubmit, onSubmitWithAI, onCancel, isLoadingShelfLife = false }) {
   const [formData, setFormData] = useState({
@@ -13,15 +19,36 @@ export default function AddGroceryForm({ onSubmit, onSubmitWithAI, onCancel, isL
     addedManually: true
   });
   const [useAI, setUseAI] = useState(true);
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.name) {
-      if (useAI) {
-        onSubmitWithAI(formData.name);
-      } else if (formData.expiryDate) {
-        onSubmit(formData);
+    setErrors({});
+
+    // Validate item name
+    const nameValidation = validateItemName(formData.name);
+    if (!nameValidation.valid) {
+      setErrors(prev => ({ ...prev, name: nameValidation.error }));
+      return;
+    }
+
+    if (useAI) {
+      onSubmitWithAI(nameValidation.sanitized);
+    } else {
+      // Validate dates for manual entry
+      const purchaseValidation = validatePurchaseDate(formData.purchaseDate);
+      if (!purchaseValidation.valid) {
+        setErrors(prev => ({ ...prev, purchaseDate: purchaseValidation.error }));
+        return;
       }
+
+      const expiryValidation = validateExpiryDate(formData.expiryDate, formData.purchaseDate);
+      if (!expiryValidation.valid) {
+        setErrors(prev => ({ ...prev, expiryDate: expiryValidation.error }));
+        return;
+      }
+
+      onSubmit({ ...formData, name: nameValidation.sanitized });
     }
   };
 
@@ -62,11 +89,17 @@ export default function AddGroceryForm({ onSubmit, onSubmitWithAI, onCancel, isL
           type="text"
           value={formData.name}
           onChange={(e) => handleChange('name', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          maxLength={LIMITS.MAX_ITEM_NAME_LENGTH}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            errors.name ? 'border-red-500' : 'border-gray-300'
+          }`}
           placeholder="e.g., Milk, Bananas, Chicken"
           autoFocus
           required
         />
+        {errors.name && (
+          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+        )}
       </div>
 
       {!useAI && (
@@ -101,8 +134,18 @@ export default function AddGroceryForm({ onSubmit, onSubmitWithAI, onCancel, isL
                 type="date"
                 value={formData.purchaseDate}
                 onChange={(e) => handleChange('purchaseDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                max={(() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + LIMITS.MAX_PURCHASE_DATE_FUTURE_DAYS);
+                  return d.toISOString().split('T')[0];
+                })()}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.purchaseDate ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {errors.purchaseDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.purchaseDate}</p>
+              )}
             </div>
 
             <div>
@@ -113,9 +156,20 @@ export default function AddGroceryForm({ onSubmit, onSubmitWithAI, onCancel, isL
                 type="date"
                 value={formData.expiryDate}
                 onChange={(e) => handleChange('expiryDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                min={formData.purchaseDate}
+                max={(() => {
+                  const d = new Date();
+                  d.setFullYear(d.getFullYear() + LIMITS.MAX_EXPIRY_YEARS_AHEAD);
+                  return d.toISOString().split('T')[0];
+                })()}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.expiryDate ? 'border-red-500' : 'border-gray-300'
+                }`}
                 required
               />
+              {errors.expiryDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
+              )}
             </div>
           </div>
         </>

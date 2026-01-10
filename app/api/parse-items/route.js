@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { logError, createErrorResponse, validateInput } from '../../../lib/errorHandling';
 import { parseItems, processItems } from '../../../lib/localParser';
 import { lookupShelfLife, inferCategory, DEFAULT_SHELF_LIFE } from '../../../lib/shelfLifeDatabase';
+import { checkRateLimit, clampShelfLifeDays, getExpiryStatusSafe } from '../../../lib/validation';
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error("❌ ANTHROPIC_API_KEY environment variable is not set");
@@ -97,6 +98,15 @@ export async function POST(request) {
   const startTime = Date.now();
 
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit('api:parse-items:global', { perMinute: 30, perHour: 200, perDay: 1000 });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.error },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const { items, rawText } = body;
 
@@ -170,8 +180,11 @@ export async function POST(request) {
         continue;
       }
 
+      // Clamp shelf life to valid range
+      const safeDays = clampShelfLifeDays(item.shelfLifeDays);
       const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + item.shelfLifeDays);
+      expiryDate.setDate(expiryDate.getDate() + safeDays);
+      const expiryDateStr = expiryDate.toISOString().split('T')[0];
 
       finalItems.push({
         name: item.name,
@@ -179,11 +192,11 @@ export async function POST(request) {
         quantity: item.quantity || 1,
         category: item.category,
         foodType: item.foodType || 'store-bought',
-        shelfLifeDays: item.shelfLifeDays,
+        shelfLifeDays: safeDays,
         purchaseDate: today,
-        expiryDate: expiryDate.toISOString().split('T')[0],
-        daysUntilExpiry: item.shelfLifeDays,
-        status: item.shelfLifeDays <= 3 ? 'expiring_soon' : 'fresh',
+        expiryDate: expiryDateStr,
+        daysUntilExpiry: safeDays,
+        status: getExpiryStatusSafe(expiryDateStr),
         source: item.source || 'USDA',
         confidence: 'high',
         isPerishable: true,
@@ -193,9 +206,11 @@ export async function POST(request) {
 
     // Add AI-parsed items
     for (const item of aiItems) {
-      const shelfLifeDays = item.shelfLifeDays || DEFAULT_SHELF_LIFE[item.category] || 7;
+      // Clamp shelf life to valid range
+      const safeDays = clampShelfLifeDays(item.shelfLifeDays || DEFAULT_SHELF_LIFE[item.category] || 7);
       const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + shelfLifeDays);
+      expiryDate.setDate(expiryDate.getDate() + safeDays);
+      const expiryDateStr = expiryDate.toISOString().split('T')[0];
 
       finalItems.push({
         name: item.name,
@@ -203,11 +218,11 @@ export async function POST(request) {
         quantity: item.quantity || 1,
         category: item.category || 'Other',
         foodType: item.foodType || 'store-bought',
-        shelfLifeDays,
+        shelfLifeDays: safeDays,
         purchaseDate: today,
-        expiryDate: expiryDate.toISOString().split('T')[0],
-        daysUntilExpiry: shelfLifeDays,
-        status: shelfLifeDays <= 3 ? 'expiring_soon' : 'fresh',
+        expiryDate: expiryDateStr,
+        daysUntilExpiry: safeDays,
+        status: getExpiryStatusSafe(expiryDateStr),
         source: 'AI',
         confidence: 'medium',
         isPerishable: true,
