@@ -1,5 +1,6 @@
 import "./globals.css";
 import Header from "./components/layout/Header";
+import Providers from "./Providers";
 import { DM_Serif_Display, DM_Sans, Caveat } from "next/font/google";
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -32,8 +33,10 @@ export default function RootLayout({ children }) {
         className={`${dmSerifDisplay.variable} ${dmSans.variable} ${caveat.variable} antialiased min-h-screen flex flex-col`}
         style={{ backgroundColor: "var(--color-cream-100)" }}
       >
-        <Header />
-        <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
+        <Providers>
+          <Header />
+          <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
+        </Providers>
       </body>
     </html>
   );

@@ -1,0 +1,31 @@
+KROGER
+Store #123
+1234 Main St
+Columbus, OH 43215
+
+01/09/2026  3:45 PM
+
+GROCERY ITEMS:
+--------------------------------
+Whole Milk 1 Gal         $4.29
+Eggs Large Doz           $3.99
+Chicken Breast 2lb       $8.49
+Fresh Spinach 5oz        $3.49
+Greek Yogurt 32oz        $5.99
+Cheddar Cheese 8oz       $4.49
+Ground Beef 1lb          $6.99
+Bread Whole Wheat        $3.29
+Bananas 1 bunch          $1.49
+Apples Honeycrisp 3lb    $5.99
+Orange Juice 64oz        $4.79
+Butter Unsalted 1lb      $4.99
+Bacon 12oz               $6.49
+Strawberries 1lb         $4.99
+Avocados 4ct             $5.49
+
+--------------------------------
+SUBTOTAL                $75.20
+TAX                      $0.00
+TOTAL                   $75.20
+
+THANK YOU FOR SHOPPING!

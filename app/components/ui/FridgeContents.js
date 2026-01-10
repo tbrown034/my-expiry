@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { getFoodEmoji, getCategoryBgColor } from '../../../lib/foodEmojis';
-import gsap from 'gsap';
 
 export default function FridgeContents({
   groceries,
@@ -33,8 +32,7 @@ export default function FridgeContents({
     const days = item.daysUntilExpiry;
     if (days < 0) {
       const daysAgo = Math.abs(days);
-      if (daysAgo === 1) return '1d ago';
-      return `${daysAgo}d ago`;
+      return daysAgo === 1 ? '1d ago' : `${daysAgo}d ago`;
     }
     if (days === 0) return 'Today';
     if (days === 1) return '1d';
@@ -50,199 +48,63 @@ export default function FridgeContents({
     return 'text-slate-500 bg-slate-100';
   };
 
-  // Food item card component with GSAP animations
+  // Food item card component with CSS transitions
   const FoodItem = ({ item }) => {
+    const [isHovered, setIsHovered] = useState(false);
     const emoji = getFoodEmoji(item.name, item.category);
     const bgColor = getCategoryBgColor(item.category);
     const isUrgent = item.daysUntilExpiry <= 3 && !item.eaten;
 
-    const containerRef = useRef(null);
-    const actionsRef = useRef(null);
-    const eatBtnRef = useRef(null);
-    const deleteBtnRef = useRef(null);
-
-    // Setup initial state for action buttons
-    useEffect(() => {
-      if (actionsRef.current && !item.eaten) {
-        gsap.set(actionsRef.current, { opacity: 0, y: 8, scale: 0.8 });
-        gsap.set([eatBtnRef.current, deleteBtnRef.current], { scale: 0.5, opacity: 0 });
-      }
-    }, [item.eaten]);
-
-    const handleMouseEnter = useCallback(() => {
-      if (!actionsRef.current || item.eaten) return;
-
-      // Animate container lift
-      gsap.to(containerRef.current, {
-        y: -4,
-        scale: 1.05,
-        duration: 0.3,
-        ease: 'power2.out'
-      });
-
-      // Fade in actions container
-      gsap.to(actionsRef.current, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.25,
-        ease: 'back.out(1.7)'
-      });
-
-      // Stagger in buttons
-      gsap.to([eatBtnRef.current, deleteBtnRef.current], {
-        scale: 1,
-        opacity: 1,
-        duration: 0.3,
-        stagger: 0.08,
-        ease: 'back.out(2)'
-      });
-    }, [item.eaten]);
-
-    const handleMouseLeave = useCallback(() => {
-      if (!actionsRef.current || item.eaten) return;
-
-      // Reset container
-      gsap.to(containerRef.current, {
-        y: 0,
-        scale: 1,
-        duration: 0.25,
-        ease: 'power2.inOut'
-      });
-
-      // Fade out actions
-      gsap.to(actionsRef.current, {
-        opacity: 0,
-        y: 8,
-        scale: 0.8,
-        duration: 0.2,
-        ease: 'power2.in'
-      });
-
-      gsap.to([eatBtnRef.current, deleteBtnRef.current], {
-        scale: 0.5,
-        opacity: 0,
-        duration: 0.15,
-        ease: 'power2.in'
-      });
-    }, [item.eaten]);
-
-    const handleEat = useCallback((e) => {
+    const handleEat = (e) => {
       e.stopPropagation();
-      if (!eatBtnRef.current) return;
+      onMarkAsEaten?.(item.id);
+    };
 
-      // Satisfying click animation
-      gsap.timeline()
-        .to(eatBtnRef.current, {
-          scale: 1.4,
-          duration: 0.15,
-          ease: 'power2.out'
-        })
-        .to(eatBtnRef.current, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.2,
-          ease: 'power2.in'
-        })
-        .to(containerRef.current, {
-          scale: 0.9,
-          opacity: 0.5,
-          duration: 0.2,
-          ease: 'power2.in',
-          onComplete: () => onMarkAsEaten?.(item.id)
-        });
-    }, [item.id, onMarkAsEaten]);
-
-    const handleDelete = useCallback((e) => {
+    const handleDelete = (e) => {
       e.stopPropagation();
-      if (!deleteBtnRef.current) return;
-
-      // Shake and fade out animation
-      gsap.timeline()
-        .to(deleteBtnRef.current, {
-          scale: 1.3,
-          duration: 0.1,
-          ease: 'power2.out'
-        })
-        .to(containerRef.current, {
-          x: -5,
-          duration: 0.05,
-          ease: 'power2.inOut'
-        })
-        .to(containerRef.current, {
-          x: 5,
-          duration: 0.05,
-          ease: 'power2.inOut'
-        })
-        .to(containerRef.current, {
-          x: -3,
-          duration: 0.05,
-          ease: 'power2.inOut'
-        })
-        .to(containerRef.current, {
-          x: 0,
-          scale: 0.8,
-          opacity: 0,
-          duration: 0.2,
-          ease: 'power2.in',
-          onComplete: () => onDeleteItem?.(item.id)
-        });
-    }, [item.id, onDeleteItem]);
-
-    const handleButtonHover = useCallback((ref, entering) => {
-      if (!ref.current) return;
-      gsap.to(ref.current, {
-        scale: entering ? 1.15 : 1,
-        duration: 0.2,
-        ease: 'power2.out'
-      });
-    }, []);
+      onDeleteItem?.(item.id);
+    };
 
     return (
       <div
-        ref={containerRef}
         onClick={() => onItemClick(item)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className={`
           relative flex flex-col items-center p-2 rounded-xl cursor-pointer
+          transition-transform duration-200 ease-out
+          ${isHovered && !item.eaten ? '-translate-y-1 scale-105' : ''}
           ${item.eaten ? 'opacity-40' : ''}
           ${isUrgent ? 'bg-red-50/80' : bgColor}
         `}
-        style={{ willChange: 'transform' }}
       >
-        {/* Hover action buttons - graceful floating icons */}
+        {/* Hover action buttons */}
         {!item.eaten && (
           <div
-            ref={actionsRef}
-            className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20"
+            className={`
+              absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20
+              transition-all duration-200 ease-out
+              ${isHovered ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-90 pointer-events-none'}
+            `}
           >
-            {/* Eat button */}
+            {/* Eat button - 44px touch target */}
             <button
-              ref={eatBtnRef}
               onClick={handleEat}
-              onMouseEnter={() => handleButtonHover(eatBtnRef, true)}
-              onMouseLeave={() => handleButtonHover(eatBtnRef, false)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30"
-              style={{ willChange: 'transform' }}
+              className="w-11 h-11 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-lg transition-all duration-150 hover:scale-110 active:scale-95"
               title="Mark as eaten"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </button>
 
-            {/* Delete button */}
+            {/* Delete button - 44px touch target */}
             <button
-              ref={deleteBtnRef}
               onClick={handleDelete}
-              onMouseEnter={() => handleButtonHover(deleteBtnRef, true)}
-              onMouseLeave={() => handleButtonHover(deleteBtnRef, false)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/30"
-              style={{ willChange: 'transform' }}
+              className="w-11 h-11 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg transition-all duration-150 hover:scale-110 active:scale-95"
               title="Delete"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -257,12 +119,19 @@ export default function FridgeContents({
           <span className="text-2xl sm:text-3xl">{emoji}</span>
         </div>
 
-        {/* Name */}
+        {/* Name - improved truncation */}
         <span className={`
-          text-[11px] sm:text-xs font-medium text-center leading-tight max-w-full truncate
+          text-[11px] sm:text-xs font-medium text-center leading-tight w-full px-1
           ${item.eaten ? 'line-through text-slate-400' : 'text-slate-700'}
-        `}>
-          {item.name.length > 10 ? item.name.substring(0, 10) + '…' : item.name}
+        `}
+        style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          wordBreak: 'break-word',
+        }}>
+          {item.name}
         </span>
 
         {/* Expiry badge */}

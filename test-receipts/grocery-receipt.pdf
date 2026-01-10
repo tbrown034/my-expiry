@@ -1,0 +1,77 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 700] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 850 >>
+stream
+BT
+/F1 18 Tf
+150 670 Td
+(WHOLE FOODS) Tj
+/F1 12 Tf
+-50 -25 Td
+(Store #789 - Austin, TX) Tj
+0 -15 Td
+(01/09/2026  5:15 PM) Tj
+0 -30 Td
+(================================) Tj
+0 -20 Td
+(Organic Milk 1 Gal        $5.99) Tj
+0 -15 Td
+(Free Range Eggs Doz       $6.49) Tj
+0 -15 Td
+(Grass Fed Beef 1lb        $12.99) Tj
+0 -15 Td
+(Wild Salmon Fillet        $15.99) Tj
+0 -15 Td
+(Organic Spinach 5oz       $4.49) Tj
+0 -15 Td
+(Organic Kale Bunch        $3.49) Tj
+0 -15 Td
+(Avocados 4ct              $6.99) Tj
+0 -15 Td
+(Fresh Strawberries        $5.99) Tj
+0 -15 Td
+(Sourdough Bread           $5.49) Tj
+0 -15 Td
+(Greek Yogurt 32oz         $7.49) Tj
+0 -15 Td
+(Hummus Original           $4.99) Tj
+0 -15 Td
+(Rotisserie Chicken        $10.99) Tj
+0 -30 Td
+(================================) Tj
+0 -20 Td
+(SUBTOTAL                  $91.36) Tj
+0 -15 Td
+(TAX                       $7.31) Tj
+0 -20 Td
+(TOTAL                     $98.67) Tj
+0 -30 Td
+(Thank you for shopping!) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000266 00000 n 
+0000001168 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1245
+%%EOF

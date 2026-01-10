@@ -3,6 +3,33 @@
 import { useState, useEffect } from 'react';
 import { Category } from '../../../lib/types';
 
+// Map lowercase API categories to Category enum values
+function normalizeCategory(apiCategory) {
+  if (!apiCategory) return Category.OTHER;
+
+  const categoryMap = {
+    'dairy': Category.DAIRY,
+    'meat': Category.MEAT,
+    'vegetables': Category.VEGETABLES,
+    'fruits': Category.FRUITS,
+    'bakery': Category.BAKERY,
+    'frozen': Category.FROZEN,
+    'pantry': Category.PANTRY,
+    'beverages': Category.BEVERAGES,
+    'other': Category.OTHER,
+  };
+
+  // Try lowercase match first, then check if it's already a valid Category value
+  const normalized = categoryMap[apiCategory.toLowerCase()];
+  if (normalized) return normalized;
+
+  // Check if it's already a valid Category value (capitalized)
+  const validCategories = Object.values(Category);
+  if (validCategories.includes(apiCategory)) return apiCategory;
+
+  return Category.OTHER;
+}
+
 export default function DocumentAnalysisPopup({ analysisResult, onConfirm, onCancel }) {
   const [items, setItems] = useState([]);
 
@@ -11,7 +38,7 @@ export default function DocumentAnalysisPopup({ analysisResult, onConfirm, onCan
       setItems(analysisResult.groceryItems.map((item, index) => ({
         id: index,
         name: item.name,
-        category: item.category,
+        category: normalizeCategory(item.category),
         purchaseDate: item.purchaseDate || new Date().toISOString().split('T')[0],
         shelfLifeDays: Math.ceil((new Date(item.expiryDate) - new Date(item.purchaseDate || new Date())) / (1000 * 60 * 60 * 24)),
         expiryDate: item.expiryDate

@@ -4,6 +4,31 @@ import { useState, useEffect } from 'react';
 import { Category } from '../../../lib/types';
 import { getFoodEmoji } from '../../../lib/foodEmojis';
 
+// Map lowercase API categories to Category enum values
+function normalizeCategory(apiCategory) {
+  if (!apiCategory) return Category.OTHER;
+
+  const categoryMap = {
+    'dairy': Category.DAIRY,
+    'meat': Category.MEAT,
+    'vegetables': Category.VEGETABLES,
+    'fruits': Category.FRUITS,
+    'bakery': Category.BAKERY,
+    'frozen': Category.FROZEN,
+    'pantry': Category.PANTRY,
+    'beverages': Category.BEVERAGES,
+    'other': Category.OTHER,
+  };
+
+  const normalized = categoryMap[apiCategory.toLowerCase()];
+  if (normalized) return normalized;
+
+  const validCategories = Object.values(Category);
+  if (validCategories.includes(apiCategory)) return apiCategory;
+
+  return Category.OTHER;
+}
+
 export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +44,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
       id: index,
       name: item.name || '',
       modifier: item.modifier || '',
-      category: item.category || Category.OTHER,
+      category: normalizeCategory(item.category),
       foodType: item.foodType || 'store-bought',
       purchaseDate: item.purchaseDate || today,
       shelfLifeDays: item.shelfLifeDays,

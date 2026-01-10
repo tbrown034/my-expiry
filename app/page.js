@@ -1,5 +1,5 @@
-import MainClient from "./MainClient";
+import HomePage from "./components/pages/HomePage";
 
-export default async function Page() {
-  return <MainClient />;
+export default function Page() {
+  return <HomePage />;
 }
