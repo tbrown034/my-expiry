@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Category } from '../../../lib/types';
 import { ButtonSpinner } from '../ui/LoadingSpinner';

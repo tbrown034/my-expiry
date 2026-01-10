@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Category } from '../../../lib/types';
 import { getFoodEmoji } from '../../../lib/foodEmojis';
+import { Magnet } from '../svg';
 
 // Map lowercase API categories to Category enum values
 function normalizeCategory(apiCategory) {
@@ -144,8 +145,6 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
     if (days < 0) return 'Expired';
     if (days === 0) return 'Today';
     if (days === 1) return 'Tomorrow';
-    if (days <= 3) return `${days} days`;
-    if (days <= 7) return `${days} days`;
     return `${days} days`;
   };
 
@@ -157,54 +156,54 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
     return 'text-emerald-600';
   };
 
-  // Loading state - sticky note style
+  // Loading state - premium sticky note style
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div className="relative" style={{ transform: 'rotate(-1deg)' }}>
-          {/* Red magnet - on the fridge, holding the note */}
-          <div
-            className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full z-20"
-            style={{
-              background: 'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #991b1b 100%)',
-              boxShadow: '0 3px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4)',
-            }}
+          {/* Red magnet */}
+          <Magnet
+            color="red"
+            size={32}
+            className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg"
           />
 
-          {/* Shadow */}
-          <div className="absolute inset-0 bg-black/25 rounded-sm translate-y-2 translate-x-1" />
+          {/* Soft shadow with blur */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/30 rounded-lg translate-y-2 blur-md" />
 
-          {/* Note */}
-          <div
-            className="relative w-80 rounded-sm p-6 shadow-xl overflow-hidden"
-            style={{
-              backgroundImage: `
-                linear-gradient(to bottom, transparent 0px, transparent 28px, rgba(180, 83, 9, 0.08) 28px, rgba(180, 83, 9, 0.08) 29px),
-                linear-gradient(to bottom right, #fef9c3 0%, #fefce8 50%, #fef3c7 100%)
-              `,
-              backgroundSize: '100% 30px, 100% 100%',
-            }}
-          >
+          {/* Note with glass effect */}
+          <div className="relative w-80 rounded-lg overflow-hidden">
+            {/* Base gradient - yellow/amber */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50/95 to-orange-50/90" />
+
+            {/* Glass shine overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-transparent" />
+
+            {/* Inner glow */}
+            <div className="absolute inset-[1px] rounded-lg bg-gradient-to-br from-white/40 via-amber-50/20 to-transparent" />
 
             {/* Content */}
-            <div className="pt-2 text-center">
+            <div className="relative p-6 backdrop-blur-[2px]">
+              {/* Top edge highlight */}
+              <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+
               {/* Spinner */}
-              <div className="w-12 h-12 mx-auto mb-4 relative">
+              <div className="w-14 h-14 mx-auto mb-4 relative">
                 <div className="absolute inset-0 border-4 border-amber-200 rounded-full" />
                 <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
               </div>
 
               {/* Title */}
-              <h3 className="text-lg font-bold text-slate-800 mb-1">
+              <h3 className="text-lg font-bold text-slate-800 text-center mb-1 tracking-tight">
                 Getting Shelf Life...
               </h3>
 
               {/* Info */}
-              <p className="text-amber-700 font-medium text-sm mb-3">
+              <p className="text-amber-700 font-semibold text-sm text-center mb-3">
                 {items.length} items to look up
               </p>
 
-              <p className="text-slate-400 text-xs">
+              <p className="text-slate-400 text-xs text-center">
                 This usually takes a few seconds
               </p>
             </div>
@@ -215,14 +214,14 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">
                 Add to Fridge?
               </h2>
               <p className="text-sm text-slate-500 mt-0.5">
@@ -231,9 +230,9 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
             </div>
             <button
               onClick={onCancel}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+              className="w-10 h-10 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors"
             >
-              <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -252,15 +251,15 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
           <div className="flex-1 overflow-y-auto">
             <div className="divide-y divide-slate-100">
               {items.map(item => (
-                <div key={item.id} className="px-5 py-3 hover:bg-slate-50 transition-colors">
+                <div key={item.id} className="px-5 py-4 hover:bg-slate-50/50 transition-colors">
                   {editingId === item.id ? (
                     // Edit mode
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">Editing</span>
+                        <span className="text-sm font-semibold text-slate-700">Editing</span>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="text-sm text-emerald-600 font-medium"
+                          className="text-sm text-emerald-600 font-semibold"
                         >
                           Done
                         </button>
@@ -269,14 +268,14 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                         type="text"
                         value={item.name}
                         onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                         placeholder="Item name"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <select
                           value={item.category}
                           onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                         >
                           {Object.values(Category).map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
@@ -285,7 +284,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                         <select
                           value={item.foodType}
                           onChange={(e) => updateItem(item.id, 'foodType', e.target.value)}
-                          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                         >
                           <option value="store-bought">Store-bought</option>
                           <option value="premade">Deli/Premade</option>
@@ -294,7 +293,7 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-sm text-red-500 hover:text-red-600"
+                        className="text-sm text-red-500 hover:text-red-600 font-medium"
                       >
                         Remove item
                       </button>
@@ -302,20 +301,20 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                   ) : (
                     // Display mode
                     <div className="flex items-center gap-3">
-                      {/* Emoji */}
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xl">{getFoodEmoji(item.name, item.category)}</span>
+                      {/* Emoji with premium container */}
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-slate-100">
+                        <span className="text-2xl">{getFoodEmoji(item.name, item.category)}</span>
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-800 truncate">{item.name}</div>
+                        <div className="font-semibold text-slate-800 truncate">{item.name}</div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                          <span>{item.category}</span>
+                          <span className="font-medium">{item.category}</span>
                           {item.shelfLifeDays !== undefined && (
                             <>
-                              <span>•</span>
-                              <span className={getExpiryColor(item.shelfLifeDays)}>
+                              <span className="text-slate-300">•</span>
+                              <span className={`font-semibold ${getExpiryColor(item.shelfLifeDays)}`}>
                                 {getExpiryText(item.shelfLifeDays)}
                               </span>
                             </>
@@ -323,31 +322,31 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
                         </div>
                       </div>
 
-                      {/* Days adjuster */}
+                      {/* Days adjuster - 44px touch targets */}
                       {item.shelfLifeDays !== undefined && (
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => adjustDays(item.id, -1)}
-                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors"
+                            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors active:scale-95"
                           >
                             −
                           </button>
-                          <span className="w-8 text-center text-sm font-medium text-slate-700">
+                          <span className="w-10 text-center text-sm font-semibold text-slate-700">
                             {item.shelfLifeDays}d
                           </span>
                           <button
                             onClick={() => adjustDays(item.id, 1)}
-                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors"
+                            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-colors active:scale-95"
                           >
                             +
                           </button>
                         </div>
                       )}
 
-                      {/* Edit button */}
+                      {/* Edit button - 44px touch target */}
                       <button
                         onClick={() => setEditingId(item.id)}
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        className="w-10 h-10 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors"
                         title="Edit"
                       >
                         <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,20 +367,22 @@ export default function BatchGroceryPopup({ batchResult, onConfirm, onCancel }) 
           </div>
         )}
 
-        {/* Footer actions */}
+        {/* Footer actions with premium buttons */}
         {!isLoading && items.length > 0 && (
-          <div className="px-5 py-4 border-t border-slate-200 bg-slate-50 flex gap-3">
+          <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex gap-3">
             <button
               onClick={onCancel}
-              className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors"
+              className="flex-1 px-4 py-3 border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-100 transition-colors active:scale-[0.98]"
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors shadow-sm"
+              className="relative flex-1 px-4 py-3 text-white rounded-xl font-semibold transition-all shadow-lg active:scale-[0.98] overflow-hidden group"
             >
-              Add {items.length} Items
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 group-hover:from-emerald-500 group-hover:to-emerald-700 transition-all" />
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-xl" />
+              <span className="relative">Add {items.length} Items</span>
             </button>
           </div>
         )}

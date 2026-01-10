@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGroceries, useToast, useModal, MODAL_TYPES } from '../context';
@@ -31,8 +31,7 @@ export default function FridgePage() {
     documentResult: null,
   });
 
-  // Loading state using useTransition for non-blocking updates
-  const [isPending, startTransition] = useTransition();
+  // Loading state
   const [isLoading, setIsLoading] = useState(false);
 
   // Get the grocery for detail/edit modals
@@ -114,11 +113,8 @@ export default function FridgePage() {
   };
 
   const handleConfirmGroceryItem = (groceryData) => {
-    const result = addGrocery({
-      ...groceryData,
-      daysUntilExpiry: calculateDaysUntilExpiry(groceryData.expiryDate),
-      status: getExpiryStatus(calculateDaysUntilExpiry(groceryData.expiryDate))
-    });
+    // API already provides daysUntilExpiry and status
+    const result = addGrocery(groceryData);
 
     if (result.success) {
       toast.success('Item added to fridge!');
@@ -157,11 +153,8 @@ export default function FridgePage() {
   };
 
   const handleConfirmBatchItems = (itemsToAdd) => {
-    const result = addBatch(itemsToAdd.map(item => ({
-      ...item,
-      daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
-      status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
-    })), 'manual');
+    // API already provides daysUntilExpiry and status
+    const result = addBatch(itemsToAdd, 'manual');
 
     if (result.success) {
       toast.success(`${result.count} items added to fridge!`);
@@ -179,12 +172,9 @@ export default function FridgePage() {
   };
 
   const handleConfirmDocumentItems = (itemsToAdd) => {
+    // API already provides daysUntilExpiry and status
     const storeName = pendingData.documentResult?.storeName || null;
-    const result = addBatch(itemsToAdd.map(item => ({
-      ...item,
-      daysUntilExpiry: calculateDaysUntilExpiry(item.expiryDate),
-      status: getExpiryStatus(calculateDaysUntilExpiry(item.expiryDate))
-    })), 'receipt', storeName);
+    const result = addBatch(itemsToAdd, 'receipt', storeName);
 
     if (result.success) {
       toast.success(`${result.count} items added from receipt!`);

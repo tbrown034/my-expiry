@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Magnet } from "../svg";
 
 export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
   const [lines, setLines] = useState([""]);
@@ -56,98 +57,81 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-500 via-slate-600 to-slate-700 relative overflow-hidden">
-      {/* Metallic texture */}
-      <div
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255,255,255,0.02) 1px, rgba(255,255,255,0.02) 2px)`,
-        }}
-      />
-      {/* Light reflection */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.05) 100%)",
-        }}
-      />
-      {/* Vignette */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ boxShadow: "inset 0 0 80px rgba(0,0,0,0.12)" }}
-      />
+      {/* Ambient light reflection at top */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
+
+      {/* Subtle brushed metal texture */}
+      <div className="absolute inset-0 opacity-[0.015]" style={{
+        backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255,255,255,0.1) 1px, rgba(255,255,255,0.1) 2px)`
+      }} />
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col px-4 sm:px-6 md:px-10">
+      <div className="relative z-10 h-full flex flex-col px-4 sm:px-6">
         {/* Back button */}
         <div className="pt-4">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-white/90 hover:text-white py-2 px-3 -ml-3 rounded-lg hover:bg-white/10 active:bg-white/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white py-2.5 px-3 -ml-3 rounded-xl hover:bg-white/10 active:bg-white/15 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-medium">Back</span>
+            <span className="font-medium text-sm">Back</span>
           </button>
         </div>
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col justify-center py-6 overflow-hidden">
           <div className="w-full max-w-lg mx-auto flex flex-col h-full max-h-[600px]">
-            {/* Notebook */}
-            <div
-              className="relative flex-1 flex flex-col"
-              style={{ transform: "rotate(-0.5deg)" }}
-            >
-              {/* Shadow */}
-              <div className="absolute inset-0 bg-black/30 rounded translate-y-2 translate-x-1" />
+            {/* Notebook with premium styling */}
+            <div className="relative flex-1 flex flex-col" style={{ transform: "rotate(-0.5deg)" }}>
+              {/* Blue magnet at top */}
+              <Magnet
+                color="blue"
+                size={28}
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg"
+              />
 
-              {/* Notebook paper */}
-              <div className="relative flex-1 flex flex-col bg-white rounded shadow-xl overflow-hidden">
+              {/* Soft shadow with blur */}
+              <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-black/30 rounded-xl translate-y-2 blur-md" />
+
+              {/* Notebook paper with glass effect */}
+              <div className="relative flex-1 flex flex-col rounded-xl overflow-hidden shadow-xl">
+                {/* Base white */}
+                <div className="absolute inset-0 bg-white" />
+
+                {/* Glass shine overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-transparent" />
+
                 {/* Red margin line */}
-                <div className="absolute left-10 sm:left-12 top-0 bottom-0 w-px bg-red-300" />
+                <div className="absolute left-10 sm:left-12 top-0 bottom-0 w-px bg-red-300/70" />
 
                 {/* Spiral binding holes */}
                 <div className="absolute left-2 top-0 bottom-0 w-4 flex flex-col justify-around py-4">
                   {[...Array(12)].map((_, i) => (
                     <div
                       key={i}
-                      className="w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-300"
+                      className="w-3 h-3 rounded-full bg-slate-100 border-2 border-slate-200 shadow-inner"
                     />
                   ))}
                 </div>
 
                 {/* Header area */}
-                <div className="pl-14 sm:pl-16 pr-4 pt-4 pb-2 border-b border-blue-100">
-                  <h2 className="text-lg font-semibold text-slate-700">
-                    Shopping List
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Type each item, press Enter for new line
-                  </p>
+                <div className="relative pl-14 sm:pl-16 pr-4 pt-5 pb-3 border-b border-slate-100">
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Shopping List</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Type each item, press Enter for new line</p>
                 </div>
 
                 {/* Lines area - scrollable */}
-                <div className="flex-1 overflow-y-auto pl-14 sm:pl-16 pr-4 py-2">
+                <div className="relative flex-1 overflow-y-auto pl-14 sm:pl-16 pr-4 py-2">
                   {lines.map((line, index) => (
                     <div
                       key={index}
-                      className="relative flex items-center border-b border-blue-100"
-                      style={{ minHeight: "36px" }}
+                      className="relative flex items-center border-b border-blue-50"
+                      style={{ minHeight: "40px" }}
                     >
                       {/* Line number */}
-                      <span className="absolute -left-8 text-xs text-slate-300 w-6 text-right">
+                      <span className="absolute -left-8 text-xs text-slate-300 w-6 text-right font-medium">
                         {index + 1}
                       </span>
 
@@ -166,57 +150,39 @@ export default function TypeItemsPage({ onSubmit, onBack, isLoading }) {
                   ))}
                 </div>
 
-                {/* Footer */}
-                <div className="pl-14 sm:pl-16 pr-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
+                {/* Footer with premium button */}
+                <div className="relative pl-14 sm:pl-16 pr-4 py-3 bg-slate-50/80 backdrop-blur-sm border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">
                     {filledLines} item{filledLines !== 1 ? "s" : ""}
                   </span>
                   <button
                     onClick={handleSubmit}
                     disabled={filledLines === 0 || isLoading}
-                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                    className="relative group px-4 py-2.5 text-white text-sm font-semibold rounded-xl transition-all disabled:cursor-not-allowed active:scale-[0.98] flex items-center gap-2 shadow-lg"
                   >
-                    {isLoading ? (
-                      <>
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Add to Fridge
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </>
-                    )}
+                    {/* Button background with glow */}
+                    <div className={`absolute inset-0 rounded-xl ${filledLines === 0 || isLoading ? 'bg-slate-300' : 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 group-hover:from-emerald-500 group-hover:to-emerald-700'} transition-all`} />
+                    <div className={`absolute inset-0 rounded-xl ring-1 ${filledLines === 0 || isLoading ? 'ring-slate-400/20' : 'ring-white/20'}`} />
+
+                    {/* Button content */}
+                    <span className="relative flex items-center gap-2">
+                      {isLoading ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Add to Fridge
+                          <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                          </svg>
+                        </>
+                      )}
+                    </span>
                   </button>
                 </div>
               </div>
